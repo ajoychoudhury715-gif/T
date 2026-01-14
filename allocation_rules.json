@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "global": {
+    "cross_department_fallback": true,
+    "use_profile_role_flags": true,
+    "load_balance": true
+  },
+  "departments": {
+    "PROSTHO": {
+      "doctors": [
+        "DR.SHIFA"
+      ],
+      "assistants": [
+        "ARCHANA",
+        "SHAKSHI",
+        "RAJA",
+        "NITIN",
+        "ANSHIKA",
+        "BABU",
+        "PRAMOTH",
+        "RESHMA"
+      ],
+      "allocation_rules": {
+        "FIRST": {
+          "default": [
+            "ANSHIKA",
+            "RAJA",
+            "NITIN",
+            "RESHMA",
+            "PRAMOTH",
+            "BABU"
+          ],
+          "time_override": [
+            {
+              "after_hour": 13,
+              "assistant": "ARCHANA"
+            },
+            {
+              "after_hour": 15.5,
+              "assistant": "SHAKSHI"
+            }
+          ]
+        },
+        "SECOND": {
+          "when_first_is": {
+            "ANSHIKA": [
+              "ARCHANA",
+              "NITIN",
+              "BABU",
+              "RAJA",
+              "RESHMA",
+              "PRAMOTH"
+            ]
+          },
+          "default": [
+            "NITIN",
+            "ANSHIKA",
+            "BABU",
+            "RAJA",
+            "RESHMA",
+            "PRAMOTH"
+          ]
+        }
+      }
+    },
+    "ENDO": {
+      "doctors": [
+        "DR.FARHATH",
+        "DR.NIMAI",
+        "DR.SHRUTI",
+        "DR.KALPANA",
+        "DR.MANVEEN",
+        "DR.NEHA"
+      ],
+      "assistants": [
+        "ANYA",
+        "LAVANYA",
+        "ROHINI",
+        "MUKHILA",
+        "SHAKSHI",
+        "ARCHANA",
+        "ANSHIKA"
+      ],
+      "allocation_rules": {
+        "FIRST": {
+          "doctor_overrides": {
+            "DR.NIMAI": [
+              "ARCHANA"
+            ],
+            "DR.FARHATH": [
+              "ANYA",
+              "LAVANYA",
+              "ROHINI"
+            ],
+            "DR.SHRUTI": [
+              "LAVANYA",
+              "ANYA",
+              "ROHINI"
+            ],
+            "DR.KALPANA": [
+              "ROHINI",
+              "ANYA",
+              "LAVANYA"
+            ],
+            "DR.MANVEEN": [
+              "ANYA",
+              "ROHINI",
+              "LAVANYA"
+            ],
+            "DR.NEHA": [
+              "LAVANYA",
+              "ROHINI",
+              "ANYA"
+            ]
+          },
+          "default": [
+            "LAVANYA",
+            "ROHINI",
+            "ANYA"
+          ],
+          "time_override": [
+            {
+              "after_hour": 12,
+              "assistant": "ANYA"
+            }
+          ]
+        },
+        "SECOND": {
+          "default": [
+            "MUKHILA",
+            "SHAKSHI",
+            "ARCHANA",
+            "ROHINI"
+          ]
+        },
+        "Third": {
+          "default": [
+            "ROHINI",
+            "SHAKSHI",
+            "ARCHANA",
+            "MUKHILA"
+          ]
+        }
+      }
+    }
+  }
+}
