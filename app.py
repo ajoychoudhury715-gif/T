@@ -1156,42 +1156,43 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
         .schedule-cards {display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-top: 8px;}
         .schedule-card {background:#f3f3f4; border:1px solid #d9c5b2; border-radius:18px; padding:14px; box-shadow:0 10px 20px rgba(20,17,15,0.08); display:flex; flex-direction:column; gap:10px; min-height:220px;}
         .card-shell-marker {display:none;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) {background:linear-gradient(180deg, #ffffff 0%, #f2f4f7 100%); border:1px solid #e3e6ec; border-radius:24px; box-shadow:0 22px 44px rgba(24, 28, 36, 0.18); overflow:hidden;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) > div {padding:0 20px 18px 20px; display:flex; flex-direction:column; gap:12px; min-height:260px;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) [data-testid="stHorizontalBlock"] {gap: 0.6rem; align-items:center; justify-content:flex-start;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) {background:linear-gradient(180deg, #fefefe 0%, #edf0f5 100%); border:1px solid #e6ecf3; border-radius:28px; box-shadow:0 28px 58px rgba(18, 22, 32, 0.28); overflow:hidden;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) > div {padding:0; display:flex; flex-direction:column; gap:14px; min-height:260px;}
+        .card-inner {background:#fff; border-radius:24px; border:1px solid #eceff5; box-shadow:0 18px 32px rgba(22, 24, 31, 0.18); padding:0 22px 18px; display:flex; flex-direction:column; gap:10px;}
+        .card-inner .card-status-banner {margin-top:0;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) [data-testid="stHorizontalBlock"] {gap: 0.8rem; align-items:center; justify-content:flex-start;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stButton>button,
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) [data-testid="stButton"] > button,
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind] {height: 34px !important; border-radius: 12px !important; font-weight: 700; text-transform: none; letter-spacing: 0; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; min-width: 90px; padding: 0 12px !important; font-size: 12px; line-height: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; box-shadow: 0 6px 14px rgba(24, 28, 36, 0.12); color:#3f434a;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind] {height: 36px !important; border-radius: 14px !important; font-weight: 700; text-transform: none; letter-spacing: 0; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; min-width: 110px; padding: 0 16px !important; font-size: 13px; line-height: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; box-shadow: 0 10px 24px rgba(22, 24, 31, 0.14); color:#3f434a;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stButton>button *,
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind] * {white-space: nowrap;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) {flex-wrap: wrap; row-gap: 0.5rem; align-items:center;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) > div {min-width: 96px; flex: 1 1 96px;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) {flex-wrap: wrap; row-gap: 0.5rem; align-items:center; justify-content:flex-end;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) > div {min-width: 120px; flex: 1 1 120px;}
         @media (min-width: 1100px) {
             div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) {flex-wrap: nowrap;}
-            div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) > div {min-width: 100px; flex: 0 0 auto;}
+            div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) > div {flex: 0 0 auto;}
         }
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox {margin-top: 4px;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox label {font-size: 14px; font-weight: 600; color:#2f333a; white-space: normal; line-height: 1.2;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox {margin-top: 10px;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox label {font-size: 14px; font-weight: 600; color:#2f333a; letter-spacing:0.1px; text-transform:none; white-space: normal; line-height: 1.4;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] > div,
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] > label > div {width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid #c3c8d0; background: #ffffff;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] input:checked + div {background:#2f63e8; border-color:#2f63e8;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="primary"] {background:#2f63e8 !important; border:1px solid #2f63e8 !important; color:#ffffff !important; box-shadow:0 8px 18px rgba(47,99,232,0.28) !important;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="primary"] {background:#2f63e8 !important; border:1px solid #2f63e8 !important; color:#ffffff !important; box-shadow:0 10px 24px rgba(47,99,232,0.32) !important;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="secondary"] {background:#ffffff !important; border:1px solid #d5d8de !important; color:#4b4f56 !important; box-shadow:0 6px 14px rgba(24, 28, 36, 0.08) !important;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="column"]:has(.card-action-cancel) button {border-color:#e1b0b0 !important; color:#b15454 !important; background:#ffffff !important;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.stCheckbox) div[data-testid="column"]:has(.card-action-done) {margin-left: 8px;}
         .card-action-marker {display:none;}
-        .card-status-banner {display:flex; align-items:center; gap:10px; padding:12px 20px; border-radius:20px 20px 12px 12px; font-weight:800; font-size:13px; letter-spacing:0.8px; text-transform:uppercase; margin:0 -20px 14px -20px;}
-        .card-status-banner.waiting {background:linear-gradient(90deg, #f7e6b7, #fff2d6); color:#8a775b;}
-        .card-status-banner.ongoing {background:linear-gradient(90deg, #dfe9ff, #f1f5ff); color:#2f4f86;}
-        .card-status-banner.arrived {background:linear-gradient(90deg, #e9e9ea, #f5f5f6); color:#50545a;}
+        .card-status-banner {display:flex; align-items:center; gap:10px; padding:12px 0 14px 0; border-radius:20px 20px 16px 16px; font-weight:800; font-size:13px; letter-spacing:0.8px; text-transform:uppercase; margin:0 -22px 12px -22px; background:linear-gradient(90deg, #fff3d3, #fef5de);}
+        .card-status-banner.waiting {color:#8a775b;}
+        .card-status-banner.ongoing {background:linear-gradient(90deg, #dee5ff, #eff2ff); color:#2f4f86;}
+        .card-status-banner.arrived {background:linear-gradient(90deg, #edf0f1, #f5f7fa); color:#50545a;}
         .card-status-banner.completed {background:linear-gradient(90deg, #def3e6, #eef8f1); color:#3d6b4a;}
-        .card-status-banner.cancelled {background:linear-gradient(90deg, #f6d1d1, #fde8e8); color:#9a4b4b;}
-        .status-dot {width:14px; height:14px; border-radius:50%;}
-        .card-status-banner.waiting .status-dot {background:#f1b400; box-shadow:0 0 0 4px rgba(241,180,0,0.22);}
-        .card-status-banner.ongoing .status-dot {background:#3b6fd8; box-shadow:0 0 0 4px rgba(59,111,216,0.22);}
-        .card-status-banner.arrived .status-dot {background:#7a7a7a; box-shadow:0 0 0 4px rgba(122,122,122,0.22);}
-        .card-status-banner.completed .status-dot {background:#4caf6b; box-shadow:0 0 0 4px rgba(76,175,107,0.22);}
-        .card-status-banner.cancelled .status-dot {background:#d45c5c; box-shadow:0 0 0 4px rgba(212,92,92,0.22);}
+        .card-status-banner.cancelled {background:linear-gradient(90deg, #f4d5d6, #fde8e8); color:#9a4b4b;}
+        .status-dot {width:16px; height:16px; border-radius:50%;}
+        .card-status-banner.waiting .status-dot {background:#f1b400; box-shadow:0 0 0 4px rgba(241,180,0,0.28);}
+        .card-status-banner.ongoing .status-dot {background:#3b6fd8; box-shadow:0 0 0 4px rgba(59,111,216,0.28);}
+        .card-status-banner.arrived .status-dot {background:#7a7a7a; box-shadow:0 0 0 4px rgba(122,122,122,0.28);}
+        .card-status-banner.completed .status-dot {background:#4caf6b; box-shadow:0 0 0 4px rgba(76,175,107,0.28);}
+        .card-status-banner.cancelled .status-dot {background:#d45c5c; box-shadow:0 0 0 4px rgba(212,92,92,0.28);}
         .card-head {display:flex; align-items:center; gap:16px;}
         .card-title {display:flex; flex-direction:column; gap:3px;}
         .card-avatar {width:56px; height:56px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #f6e4c9, #e4cca4); border:1px solid #ead8be; color:#5d4a35; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);}
@@ -1206,10 +1207,10 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
         .card-subdivider {height:1px; background:#e4e6eb; margin: 10px 0 6px;}
         .card-divider {height:1px; background:#e4e6eb; margin: 12px 0;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) [data-testid="stExpander"] {border:1px solid #d9dde3; border-radius:12px; background:#f7f8fa; margin-top:6px;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) summary {padding:10px 12px; font-weight:600; color:#60656c; display:flex; align-items:center; gap:10px; font-size:13px;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) summary {padding:10px 12px; font-weight:600; color:#60656c; display:flex; align-items:center; gap:10px; font-size:13px; background:#fff; border-radius:12px; box-shadow:0 4px 12px rgba(20,17,15,0.08);}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) summary::before {content:"›"; color:#7a8087; font-size:18px;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) summary::after {content:"⋯"; margin-left:auto; color:#9aa0a7; font-size:18px;}
-        .card-expand {font-size:12px; color:#6f757d; border-top:1px solid #d9dde3; padding-top:8px; display:flex; align-items:center; justify-content:space-between;}
+        .card-expand {font-size:12px; color:#6f757d; border-top:1px solid #d9dde3; padding-top:8px; display:flex; align-items:center; justify-content:space-between; margin-top:4px;}
         </style>
         """,
         unsafe_allow_html=True,
@@ -1846,28 +1847,29 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
                             st.markdown(
                                 _normalize_html(
                                     f"""
-                                    <div class="card-status-banner {status_class}">
-                                        <span class="status-dot"></span>
-                                        <span class="status-text">{html.escape(status_text)}</span>
-                                    </div>
-                                    <div class="card-head">
-                                        <div class="card-avatar">{html.escape(_initials(patient))}</div>
-                                        <div class="card-title">
-                                            <div class="card-name">{html.escape(patient) if patient else "Unknown"}</div>
-                                            <div class="card-time">{html.escape(time_text) if time_text else "--"}</div>
+                                    <div class="card-inner">
+                                        <div class="card-status-banner {status_class}">
+                                            <span class="status-dot"></span>
+                                            <span class="status-text">{html.escape(status_text)}</span>
                                         </div>
-                                    </div>
-                                    <div class="card-subdivider"></div>
-                                    <div class="card-info">
-                                        {doctor_line}
-                                        {staff_line}
+                                        <div class="card-head">
+                                            <div class="card-avatar">{html.escape(_initials(patient))}</div>
+                                            <div class="card-title">
+                                                <div class="card-name">{html.escape(patient) if patient else "Unknown"}</div>
+                                                <div class="card-time">{html.escape(time_text) if time_text else "--"}</div>
+                                            </div>
+                                        </div>
+                                        <div class="card-subdivider"></div>
+                                        <div class="card-info">
+                                            {doctor_line}
+                                            {staff_line}
+                                        </div>
+                                        <div class="card-divider"></div>
                                     </div>
                                     """
                                 ),
                                 unsafe_allow_html=True,
                             )
-
-                            st.markdown("<div class='card-divider'></div>", unsafe_allow_html=True)
                             if show_case:
                                 row_cols = st.columns([1, 1.15, 1.15, 1.15], gap="small")
                                 with row_cols[0]:
