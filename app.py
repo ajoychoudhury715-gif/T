@@ -2383,6 +2383,26 @@ st.markdown(
         border-color: #2f63e8;
         box-shadow: 0 0 0 3px rgba(47, 99, 232, 0.16);
     }}
+    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_in_hour_"]) svg,
+    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_in_min_"]) svg,
+    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_in_ampm_"]) svg,
+    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_out_hour_"]) svg,
+    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_out_min_"]) svg,
+    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_out_ampm_"]) svg,
+    div[role="dialog"] [data-baseweb="select"]:has(input[aria-label="Hour"]) svg,
+    div[role="dialog"] [data-baseweb="select"]:has(input[aria-label="Minute"]) svg,
+    div[role="dialog"] [data-baseweb="select"]:has(input[aria-label="AM/PM"]) svg,
+    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_in_hour_"]) svg,
+    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_in_min_"]) svg,
+    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_in_ampm_"]) svg,
+    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_out_hour_"]) svg,
+    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_out_min_"]) svg,
+    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_out_ampm_"]) svg,
+    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[aria-label="Hour"]) svg,
+    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[aria-label="Minute"]) svg,
+    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[aria-label="AM/PM"]) svg {{
+        display: none;
+    }}
     div[role="dialog"] button[kind],
     div[data-testid="stDialog"] button[kind] {{
         height: 38px !important;
