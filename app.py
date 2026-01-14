@@ -2046,13 +2046,8 @@ DARK_COLORS = {
     "glass_border": "#7e7f83",
 }
 
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = False
-
-with st.sidebar:
-    st.toggle("🌙 Dark mode", key="dark_mode")
-
-COLORS = DARK_COLORS if bool(st.session_state.get("dark_mode")) else LIGHT_COLORS
+# Dark mode disabled - always use light mode
+COLORS = LIGHT_COLORS
 
 # ================ WEEKLY OFF CONFIGURATION ================
 # Format: {day_of_week: [assistants_off]} where 0=Monday, 1=Tuesday, etc.
