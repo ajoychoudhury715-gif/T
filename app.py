@@ -2325,6 +2325,85 @@ st.markdown(
         border-radius: 6px !important;
     }}
 
+    /* Premium dialog styling */
+    div[role="dialog"] > div,
+    div[data-testid="stDialog"] {{
+        background: linear-gradient(180deg, #ffffff 0%, #f3f6fb 100%);
+        border: 1px solid #d7dce5;
+        border-radius: 18px;
+        box-shadow: 0 24px 48px rgba(20, 17, 15, 0.25);
+    }}
+    div[role="dialog"] h2,
+    div[data-testid="stDialog"] h2 {{
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        color: #2a2d33;
+        margin-bottom: 12px;
+    }}
+    div[role="dialog"] form,
+    div[data-testid="stDialog"] form {{
+        background: #ffffff;
+        border: 1px solid #e0e4eb;
+        border-radius: 16px;
+        padding: 14px 16px 12px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 12px 26px rgba(20, 17, 15, 0.08);
+    }}
+    div[role="dialog"] label,
+    div[data-testid="stDialog"] label {{
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: #5b6470;
+    }}
+    div[role="dialog"] [data-testid="stHorizontalBlock"],
+    div[data-testid="stDialog"] [data-testid="stHorizontalBlock"] {{
+        gap: 0.75rem;
+    }}
+    div[role="dialog"] [data-baseweb="input"] > div,
+    div[data-testid="stDialog"] [data-baseweb="input"] > div,
+    div[role="dialog"] [data-baseweb="select"] > div,
+    div[data-testid="stDialog"] [data-baseweb="select"] > div {{
+        background: #f8fafc;
+        border: 1px solid #d7dce5;
+        border-radius: 10px;
+        box-shadow: inset 0 1px 2px rgba(20, 17, 15, 0.06);
+    }}
+    div[role="dialog"] [data-baseweb="input"] > div:hover,
+    div[data-testid="stDialog"] [data-baseweb="input"] > div:hover,
+    div[role="dialog"] [data-baseweb="select"] > div:hover,
+    div[data-testid="stDialog"] [data-baseweb="select"] > div:hover {{
+        border-color: #c0c8d4;
+    }}
+    div[role="dialog"] [data-baseweb="input"] > div:focus-within,
+    div[data-testid="stDialog"] [data-baseweb="input"] > div:focus-within,
+    div[role="dialog"] [data-baseweb="select"] > div:focus-within,
+    div[data-testid="stDialog"] [data-baseweb="select"] > div:focus-within {{
+        border-color: #2f63e8;
+        box-shadow: 0 0 0 3px rgba(47, 99, 232, 0.16);
+    }}
+    div[role="dialog"] button[kind],
+    div[data-testid="stDialog"] button[kind] {{
+        height: 38px !important;
+        border-radius: 12px !important;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        box-shadow: 0 10px 20px rgba(20, 17, 15, 0.12) !important;
+    }}
+    div[role="dialog"] button[kind="primary"],
+    div[data-testid="stDialog"] button[kind="primary"] {{
+        background: #2f63e8 !important;
+        border: 1px solid #2f63e8 !important;
+        color: #ffffff !important;
+    }}
+    div[role="dialog"] button[kind="secondary"],
+    div[data-testid="stDialog"] button[kind="secondary"] {{
+        background: #ffffff !important;
+        border: 1px solid #d7dce5 !important;
+        color: #3d424a !important;
+    }}
+
     /* Summary chips */
     .summary-row {{
         display: grid;
