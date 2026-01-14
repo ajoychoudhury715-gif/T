@@ -1177,9 +1177,9 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] input:checked + div {background:#b45b5b; border-color:#b45b5b;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="primary"] {background:#ffffff !important; border:1px solid #e3bdbd !important; color:#b45b5b !important; box-shadow:0 8px 18px rgba(33, 37, 45, 0.12) !important;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="secondary"] {background:#ffffff !important; border:1px solid #e3bdbd !important; color:#b45b5b !important;}
-        div[data-testid="stVerticalBlock"]:has(.card-action-cancel) button {border-color:#e3bdbd !important; color:#b45b5b !important; background:#ffffff !important; height: 48px !important; padding: 6px 10px !important; flex-direction: column; gap: 4px; white-space: normal !important; line-height: 1.1;}
-        div[data-testid="stVerticalBlock"]:has(.card-action-cancel) button::before {content:"×"; font-size: 18px; line-height: 1;}
-        div[data-testid="stVerticalBlock"]:has(.card-action-cancel) button * {white-space: normal;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="column"]:has(.card-action-cancel) button {border-color:#e3bdbd !important; color:#b45b5b !important; background:#ffffff !important; height: 48px !important; padding: 6px 10px !important; flex-direction: column; gap: 4px; white-space: normal !important; line-height: 1.1;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="column"]:has(.card-action-cancel) button::before {content:"×"; font-size: 18px; line-height: 1;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="column"]:has(.card-action-cancel) button * {white-space: normal;}
         .card-action-marker {display:none;}
         .card-status-banner {display:flex; align-items:center; gap:10px; padding:10px 18px; border-radius:18px 18px 12px 12px; font-weight:800; font-size:12px; letter-spacing:1.1px; text-transform:uppercase; margin:0 -18px 12px -18px;}
         .card-status-banner.waiting {background:linear-gradient(90deg, #fee7b7, #fff1d6); color:#7a664f;}
@@ -8112,9 +8112,9 @@ if category == "Scheduling":
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] input:checked + div {background:#b45b5b; border-color:#b45b5b;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="primary"] {background:#ffffff !important; border:1px solid #e3bdbd !important; color:#b45b5b !important; box-shadow:0 8px 18px rgba(33, 37, 45, 0.12) !important;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="secondary"] {background:#ffffff !important; border:1px solid #e3bdbd !important; color:#b45b5b !important;}
-        div[data-testid="stVerticalBlock"]:has(.card-action-cancel) button {border-color:#e3bdbd !important; color:#b45b5b !important; background:#ffffff !important; height: 48px !important; padding: 6px 10px !important; flex-direction: column; gap: 4px; white-space: normal !important; line-height: 1.1;}
-        div[data-testid="stVerticalBlock"]:has(.card-action-cancel) button::before {content:"×"; font-size: 18px; line-height: 1;}
-        div[data-testid="stVerticalBlock"]:has(.card-action-cancel) button * {white-space: normal;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="column"]:has(.card-action-cancel) button {border-color:#e3bdbd !important; color:#b45b5b !important; background:#ffffff !important; height: 48px !important; padding: 6px 10px !important; flex-direction: column; gap: 4px; white-space: normal !important; line-height: 1.1;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="column"]:has(.card-action-cancel) button::before {content:"×"; font-size: 18px; line-height: 1;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="column"]:has(.card-action-cancel) button * {white-space: normal;}
         .card-action-marker {display:none;}
         .card-status-banner {display:flex; align-items:center; gap:10px; padding:10px 18px; border-radius:18px 18px 12px 12px; font-weight:800; font-size:12px; letter-spacing:1.1px; text-transform:uppercase; margin:0 -18px 12px -18px;}
         .card-status-banner.waiting {background:linear-gradient(90deg, #fee7b7, #fff1d6); color:#7a664f;}
