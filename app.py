@@ -1553,46 +1553,50 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
                         "Patient Name",
                         key=f"compact_popup_patient_{row_key}",
                     )
-                    st.markdown("In Time")
-                    in_time_cols = st.columns(3, gap="small")
-                    with in_time_cols[0]:
-                        in_hour = st.selectbox(
-                            "Hour",
-                            options=TIME_PICKER_HOURS,
-                            key=f"compact_popup_in_hour_{row_key}",
-                        )
-                    with in_time_cols[1]:
-                        in_minute = st.selectbox(
-                            "Minute",
-                            options=TIME_PICKER_MINUTES,
-                            key=f"compact_popup_in_min_{row_key}",
-                        )
-                    with in_time_cols[2]:
-                        in_ampm = st.selectbox(
-                            "AM/PM",
-                            options=TIME_PICKER_AMPM,
-                            key=f"compact_popup_in_ampm_{row_key}",
-                        )
-                    st.markdown("Out Time")
-                    out_time_cols = st.columns(3, gap="small")
-                    with out_time_cols[0]:
-                        out_hour = st.selectbox(
-                            "Hour",
-                            options=TIME_PICKER_HOURS,
-                            key=f"compact_popup_out_hour_{row_key}",
-                        )
-                    with out_time_cols[1]:
-                        out_minute = st.selectbox(
-                            "Minute",
-                            options=TIME_PICKER_MINUTES,
-                            key=f"compact_popup_out_min_{row_key}",
-                        )
-                    with out_time_cols[2]:
-                        out_ampm = st.selectbox(
-                            "AM/PM",
-                            options=TIME_PICKER_AMPM,
-                            key=f"compact_popup_out_ampm_{row_key}",
-                        )
+                    with st.container():
+                        st.markdown("<div class='time-select-marker'></div>", unsafe_allow_html=True)
+                        st.markdown("In Time")
+                        in_time_cols = st.columns(3, gap="small")
+                        with in_time_cols[0]:
+                            in_hour = st.selectbox(
+                                "Hour",
+                                options=TIME_PICKER_HOURS,
+                                key=f"compact_popup_in_hour_{row_key}",
+                            )
+                        with in_time_cols[1]:
+                            in_minute = st.selectbox(
+                                "Minute",
+                                options=TIME_PICKER_MINUTES,
+                                key=f"compact_popup_in_min_{row_key}",
+                            )
+                        with in_time_cols[2]:
+                            in_ampm = st.selectbox(
+                                "AM/PM",
+                                options=TIME_PICKER_AMPM,
+                                key=f"compact_popup_in_ampm_{row_key}",
+                            )
+                    with st.container():
+                        st.markdown("<div class='time-select-marker'></div>", unsafe_allow_html=True)
+                        st.markdown("Out Time")
+                        out_time_cols = st.columns(3, gap="small")
+                        with out_time_cols[0]:
+                            out_hour = st.selectbox(
+                                "Hour",
+                                options=TIME_PICKER_HOURS,
+                                key=f"compact_popup_out_hour_{row_key}",
+                            )
+                        with out_time_cols[1]:
+                            out_minute = st.selectbox(
+                                "Minute",
+                                options=TIME_PICKER_MINUTES,
+                                key=f"compact_popup_out_min_{row_key}",
+                            )
+                        with out_time_cols[2]:
+                            out_ampm = st.selectbox(
+                                "AM/PM",
+                                options=TIME_PICKER_AMPM,
+                                key=f"compact_popup_out_ampm_{row_key}",
+                            )
                     status_current = st.session_state.get(f"compact_popup_status_{row_key}", "")
                     status_options, status_index = _compact_build_select_options(STATUS_OPTIONS, status_current)
                     status_input = st.selectbox(
@@ -2383,24 +2387,11 @@ st.markdown(
         border-color: #2f63e8;
         box-shadow: 0 0 0 3px rgba(47, 99, 232, 0.16);
     }}
-    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_in_hour_"]) svg,
-    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_in_min_"]) svg,
-    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_in_ampm_"]) svg,
-    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_out_hour_"]) svg,
-    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_out_min_"]) svg,
-    div[role="dialog"] [data-baseweb="select"]:has(input[id*="_out_ampm_"]) svg,
-    div[role="dialog"] [data-baseweb="select"]:has(input[aria-label="Hour"]) svg,
-    div[role="dialog"] [data-baseweb="select"]:has(input[aria-label="Minute"]) svg,
-    div[role="dialog"] [data-baseweb="select"]:has(input[aria-label="AM/PM"]) svg,
-    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_in_hour_"]) svg,
-    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_in_min_"]) svg,
-    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_in_ampm_"]) svg,
-    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_out_hour_"]) svg,
-    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_out_min_"]) svg,
-    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[id*="_out_ampm_"]) svg,
-    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[aria-label="Hour"]) svg,
-    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[aria-label="Minute"]) svg,
-    div[data-testid="stDialog"] [data-baseweb="select"]:has(input[aria-label="AM/PM"]) svg {{
+    .time-select-marker {{display:none;}}
+    div[role="dialog"] div[data-testid="stVerticalBlock"]:has(.time-select-marker) [data-baseweb="select"] svg,
+    div[role="dialog"] div[data-testid="stVerticalBlock"]:has(.time-select-marker) [data-baseweb="select"] span[role="img"],
+    div[data-testid="stDialog"] div[data-testid="stVerticalBlock"]:has(.time-select-marker) [data-baseweb="select"] svg,
+    div[data-testid="stDialog"] div[data-testid="stVerticalBlock"]:has(.time-select-marker) [data-baseweb="select"] span[role="img"] {{
         display: none;
     }}
     div[role="dialog"] button[kind],
@@ -8426,47 +8417,51 @@ if category == "Scheduling":
             )
             time_cols = st.columns(2, gap="small")
             with time_cols[0]:
-                st.markdown("In Time")
-                in_time_cols = st.columns(3, gap="small")
-                with in_time_cols[0]:
-                    in_hour = st.selectbox(
-                        "Hour",
-                        options=TIME_PICKER_HOURS,
-                        key=f"full_popup_in_hour_{row_key}",
-                    )
-                with in_time_cols[1]:
-                    in_minute = st.selectbox(
-                        "Minute",
-                        options=TIME_PICKER_MINUTES,
-                        key=f"full_popup_in_min_{row_key}",
-                    )
-                with in_time_cols[2]:
-                    in_ampm = st.selectbox(
-                        "AM/PM",
-                        options=TIME_PICKER_AMPM,
-                        key=f"full_popup_in_ampm_{row_key}",
-                    )
+                with st.container():
+                    st.markdown("<div class='time-select-marker'></div>", unsafe_allow_html=True)
+                    st.markdown("In Time")
+                    in_time_cols = st.columns(3, gap="small")
+                    with in_time_cols[0]:
+                        in_hour = st.selectbox(
+                            "Hour",
+                            options=TIME_PICKER_HOURS,
+                            key=f"full_popup_in_hour_{row_key}",
+                        )
+                    with in_time_cols[1]:
+                        in_minute = st.selectbox(
+                            "Minute",
+                            options=TIME_PICKER_MINUTES,
+                            key=f"full_popup_in_min_{row_key}",
+                        )
+                    with in_time_cols[2]:
+                        in_ampm = st.selectbox(
+                            "AM/PM",
+                            options=TIME_PICKER_AMPM,
+                            key=f"full_popup_in_ampm_{row_key}",
+                        )
             with time_cols[1]:
-                st.markdown("Out Time")
-                out_time_cols = st.columns(3, gap="small")
-                with out_time_cols[0]:
-                    out_hour = st.selectbox(
-                        "Hour",
-                        options=TIME_PICKER_HOURS,
-                        key=f"full_popup_out_hour_{row_key}",
-                    )
-                with out_time_cols[1]:
-                    out_minute = st.selectbox(
-                        "Minute",
-                        options=TIME_PICKER_MINUTES,
-                        key=f"full_popup_out_min_{row_key}",
-                    )
-                with out_time_cols[2]:
-                    out_ampm = st.selectbox(
-                        "AM/PM",
-                        options=TIME_PICKER_AMPM,
-                        key=f"full_popup_out_ampm_{row_key}",
-                    )
+                with st.container():
+                    st.markdown("<div class='time-select-marker'></div>", unsafe_allow_html=True)
+                    st.markdown("Out Time")
+                    out_time_cols = st.columns(3, gap="small")
+                    with out_time_cols[0]:
+                        out_hour = st.selectbox(
+                            "Hour",
+                            options=TIME_PICKER_HOURS,
+                            key=f"full_popup_out_hour_{row_key}",
+                        )
+                    with out_time_cols[1]:
+                        out_minute = st.selectbox(
+                            "Minute",
+                            options=TIME_PICKER_MINUTES,
+                            key=f"full_popup_out_min_{row_key}",
+                        )
+                    with out_time_cols[2]:
+                        out_ampm = st.selectbox(
+                            "AM/PM",
+                            options=TIME_PICKER_AMPM,
+                            key=f"full_popup_out_ampm_{row_key}",
+                        )
 
             top_cols = st.columns(2, gap="small")
             with top_cols[0]:
