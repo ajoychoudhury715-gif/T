@@ -1163,11 +1163,11 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) [data-testid="stHorizontalBlock"] {gap: 0.8rem; align-items:center; justify-content:flex-start;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stButton>button,
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) [data-testid="stButton"] > button,
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind] {height: 36px !important; border-radius: 14px !important; font-weight: 700; text-transform: none; letter-spacing: 0; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; min-width: 110px; padding: 0 16px !important; font-size: 13px; line-height: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; box-shadow: 0 10px 24px rgba(22, 24, 31, 0.14); color:#3f434a;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind] {height: 32px !important; border-radius: 12px !important; font-weight: 700; text-transform: none; letter-spacing: 0; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; min-width: 90px; padding: 0 12px !important; font-size: 11px; line-height: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; box-shadow: 0 6px 18px rgba(22, 24, 31, 0.14); color:#3f434a;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stButton>button *,
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind] * {white-space: nowrap;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) {flex-wrap: wrap; row-gap: 0.5rem; align-items:center; justify-content:flex-end;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) > div {min-width: 120px; flex: 1 1 120px;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) > div {min-width: 96px; flex: 1 1 96px;}
         @media (min-width: 1100px) {
             div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) {flex-wrap: nowrap;}
             div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) > div {flex: 0 0 auto;}
