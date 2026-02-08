@@ -6295,11 +6295,18 @@ def _validate_service_account_info(info: dict) -> list[str]:
             missing.append(k)
     return missing
 
-# Try to connect to Google Sheets if credentials are available
+# Try to connect to Supabase if credentials are available
 if SUPABASE_AVAILABLE:
     try:
         sup_url, sup_key, sup_table, sup_row, profile_table = _get_supabase_config_from_secrets_or_env()
         if sup_url and sup_key:
+            # Validate URL format
+            sup_url = sup_url.strip()
+            if not (sup_url.startswith("http://") or sup_url.startswith("https://")):
+                raise ValueError(f"Invalid Supabase URL format: '{sup_url}'. Must start with http:// or https://")
+            if not ".supabase.co" in sup_url:
+                st.sidebar.warning(f"⚠️ Unusual Supabase URL: '{sup_url}'. Expected format: https://xxxxx.supabase.co")
+
             supabase_client = _get_supabase_client(sup_url, sup_key)
             if supabase_client is None:
                 raise RuntimeError("Supabase client unavailable.")
@@ -6362,21 +6369,44 @@ if SUPABASE_AVAILABLE:
         st.session_state.supabase_profiles_seeded = False
         st.session_state.supabase_staff_refreshed = False
         supabase_client = None
-        present = {}
-        try:
-            if hasattr(st, 'secrets'):
-                interesting = ["supabase_url", "supabase_key", "supabase_service_role_key", "supabase_table", "supabase_row_id"]
-                present = {k: (k in st.secrets and bool(str(st.secrets.get(k, '')).strip())) for k in interesting}
-        except Exception:
-            pass
+        USE_SUPABASE = False  # Disable Supabase, will use local Excel
 
-        st.sidebar.error(
-            f"⚠️ Supabase connection failed: {e}"
-            + ("\n\nSecrets keys (safe): " + ", ".join([f"{k}={v}" for k, v in present.items()]) if present else "")
-            + "\n\nTip: If you are using `supabase_key` (anon key), RLS may block reads/writes. "
-              "Either add a server-side `supabase_service_role_key` in Streamlit Secrets or disable RLS for this table."
-        )
-        USE_SUPABASE = False
+        # Check if it's a network/DNS error
+        error_msg = str(e).lower()
+        if "name or service not known" in error_msg or "errno -2" in error_msg:
+            st.sidebar.warning(
+                "⚠️ Supabase connection failed (network/DNS error)\n\n"
+                "**Using local Excel file instead** 📁\n\n"
+                "Possible causes:\n"
+                "• Invalid Supabase URL\n"
+                "• Network connectivity issue\n"
+                "• DNS resolution failure"
+            )
+        elif "rls" in error_msg or "permission" in error_msg:
+            st.sidebar.warning(
+                "⚠️ Supabase permission denied\n\n"
+                "**Using local Excel file instead** 📁\n\n"
+                "Tip: If using `supabase_key` (anon key), RLS may block reads/writes. "
+                "Either add `supabase_service_role_key` in secrets or disable RLS for the table."
+            )
+        else:
+            # Generic error
+            present = {}
+            try:
+                if hasattr(st, 'secrets'):
+                    interesting = ["supabase_url", "supabase_key", "supabase_service_role_key"]
+                    present = {k: (k in st.secrets and bool(str(st.secrets.get(k, '')).strip())) for k in interesting}
+            except Exception:
+                pass
+
+            st.sidebar.warning(
+                f"⚠️ Supabase connection failed: {e}\n\n"
+                f"**Using local Excel file instead** 📁"
+                + (f"\n\nCredentials configured: {', '.join([k for k, v in present.items() if v])}" if present else "")
+            )
+
+        # Show fallback status
+        st.sidebar.info("📁 Local Excel Mode Active\n\nData will be saved to: Putt Allotment.xlsx")
 
 # Force Supabase if configured (skips Excel fallback)
 if FORCE_SUPABASE and not USE_SUPABASE:
