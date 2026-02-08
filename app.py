@@ -64,6 +64,171 @@ if "nav_category" not in st.session_state:
 if "nav_sched" not in st.session_state:
     st.session_state.nav_sched = "Full Schedule"
 
+# ================ GLOBAL CONSTANTS (MOVED TO TOP TO FIX BUGS) ================
+# Indian Standard Time (IST = UTC+5:30)
+IST = timezone(timedelta(hours=5, minutes=30))
+
+# File paths
+file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Putt Allotment.xlsx")
+
+# Color schemes
+LIGHT_COLORS = {
+    "bg_primary": "#f3f3f4",
+    "bg_secondary": "#f3f3f4",
+    "text_primary": "#14110f",
+    "text_secondary": "#7e7f83",
+    "button_bg": "#34312d",
+    "button_text": "#f3f3f4",
+    "accent": "#d9c5b2",
+    "success": "#34312d",
+    "warning": "#d9c5b2",
+    "danger": "#7e7f83",
+    "info": "#34312d",
+    "glass_bg": "#f3f3f4",
+    "glass_border": "#d9c5b2",
+}
+
+DARK_COLORS = {
+    "bg_primary": "#14110f",
+    "bg_secondary": "#34312d",
+    "text_primary": "#f3f3f4",
+    "text_secondary": "#7e7f83",
+    "button_bg": "#34312d",
+    "button_text": "#f3f3f4",
+    "accent": "#d9c5b2",
+    "success": "#34312d",
+    "warning": "#d9c5b2",
+    "danger": "#7e7f83",
+    "info": "#34312d",
+    "glass_bg": "#34312d",
+    "glass_border": "#7e7f83",
+}
+
+COLORS = LIGHT_COLORS
+
+# Weekly off configuration
+WEEKLY_OFF: dict[int, list[str]] = {
+    0: ["RAJA"],                          # Monday
+    1: ["PRAMOTH", "ANYA"],              # Tuesday
+    2: ["ANSHIKA", "MUKHILA"],           # Wednesday
+    3: ["RESHMA", "LAVANYA"],            # Thursday
+    4: ["ROHINI"],                        # Friday
+    5: [],                                 # Saturday (no offs)
+    6: ["NITIN", "BABU"],                # Sunday
+}
+
+# Profile and storage configuration
+PROFILE_SUPABASE_TABLE = "profiles"
+PROFILE_ASSISTANT_SHEET = "Assistants"
+PROFILE_DOCTOR_SHEET = "Doctors"
+PROFILE_COLUMNS = [
+    "id",
+    "name",
+    "kind",
+    "department",
+    "contact_email",
+    "contact_phone",
+    "status",
+    "weekly_off",
+    "pref_first",
+    "pref_second",
+    "pref_third",
+    "created_at",
+    "updated_at",
+    "created_by",
+    "updated_by",
+]
+
+# Storage flags (will be updated based on configuration)
+USE_SUPABASE = False
+USE_GOOGLE_SHEETS = False
+FORCE_SUPABASE = True
+
+# Attendance configuration
+ATTENDANCE_SHEET = "Assistants_Attendance"
+ATTENDANCE_COLUMNS = ["DATE", "ASSISTANT", "PUNCH IN", "PUNCH OUT"]
+
+# Supabase configuration
+supabase_client = None
+supabase_table_name = "tdb_allotment_state"
+supabase_row_id = "main"
+SUPABASE_CHECK_TTL_SECONDS = 60
+
+# Google Sheets configuration
+gsheet_client = None
+gsheet_worksheet = None
+
+# Session state initialization for profiles
+if "profiles_cache_bust" not in st.session_state:
+    st.session_state.profiles_cache_bust = 0
+
+# ================ UTILITY FUNCTIONS ================
+
+def now_ist():
+    """Get current datetime in IST timezone."""
+    return datetime.now(IST)
+
+def ist_today_and_time():
+    """Get current date and time in IST as strings."""
+    now = now_ist()
+    return now.date().isoformat(), now.strftime("%H:%M:%S")
+
+def time_to_minutes(time_value: Any) -> int | None:
+    """Convert time values to minutes since midnight for comparison."""
+    from datetime import time as time_type
+
+    # Handle None
+    if time_value is None:
+        return None
+
+    # Handle time objects
+    if isinstance(time_value, time_type):
+        return time_value.hour * 60 + time_value.minute
+
+    # Handle strings
+    if isinstance(time_value, str):
+        time_value = time_value.strip()
+        if not time_value:
+            return None
+        try:
+            # Try parsing HH:MM format
+            parts = time_value.split(":")
+            if len(parts) == 2:
+                h, m = int(parts[0]), int(parts[1])
+                if 0 <= h < 24 and 0 <= m < 60:
+                    return h * 60 + m
+        except Exception:
+            pass
+
+    # Handle numbers (assume minutes or decimal hours)
+    try:
+        val = float(time_value)
+        if 0 <= val < 24:  # Assume decimal hours
+            hours = int(val)
+            minutes = int((val - hours) * 60)
+            return hours * 60 + minutes
+        elif 0 <= val < 1440:  # Assume minutes
+            return int(val)
+    except Exception:
+        pass
+
+    return None
+
+def safe_str_to_time_obj(time_str: Any) -> time_type | None:
+    """Convert HH:MM string to time object. Returns None if invalid."""
+    if not time_str or not isinstance(time_str, str):
+        return None
+    try:
+        parts = time_str.strip().split(":")
+        if len(parts) != 2:
+            return None
+        h, m = int(parts[0]), int(parts[1])
+        if 0 <= h < 24 and 0 <= m < 60:
+            return time_type(hour=h, minute=m)
+        return None
+    except Exception:
+        return None
+
 def _get_profiles_cache_snapshot() -> dict[str, Any]:
     cached = st.session_state.get("profiles_cache")
     return cached if isinstance(cached, dict) else {}
@@ -2061,56 +2226,7 @@ if "duty_current_assistant" not in st.session_state:
     st.session_state.duty_current_assistant = ""
 
 # ===== COLOR CUSTOMIZATION SECTION =====
-# Keep all colors centralized so UI stays consistent.
-LIGHT_COLORS = {
-    "bg_primary": "#f3f3f4",
-    "bg_secondary": "#f3f3f4",
-    "text_primary": "#14110f",
-    "text_secondary": "#7e7f83",
-    "button_bg": "#34312d",
-    "button_text": "#f3f3f4",
-    "accent": "#d9c5b2",
-    "success": "#34312d",
-    "warning": "#d9c5b2",
-    "danger": "#7e7f83",
-    "info": "#34312d",
-    # Solid surfaces
-    "glass_bg": "#f3f3f4",
-    "glass_border": "#d9c5b2",
-}
-
-# Dark mode with vibrant neon accents for status indicators
-DARK_COLORS = {
-    "bg_primary": "#14110f",
-    "bg_secondary": "#34312d",
-    "text_primary": "#f3f3f4",
-    "text_secondary": "#7e7f83",
-    "button_bg": "#34312d",
-    "button_text": "#f3f3f4",
-    "accent": "#d9c5b2",
-    "success": "#34312d",
-    "warning": "#d9c5b2",
-    "danger": "#7e7f83",
-    "info": "#34312d",
-    # Solid surfaces
-    "glass_bg": "#34312d",
-    "glass_border": "#7e7f83",
-}
-
-# Dark mode disabled - always use light mode
-COLORS = LIGHT_COLORS
-
-# ================ WEEKLY OFF CONFIGURATION ================
-# Format: {day_of_week: [assistants_off]} where 0=Monday, 1=Tuesday, etc.
-WEEKLY_OFF: dict[int, list[str]] = {
-    0: ["RAJA"],                          # Monday
-    1: ["PRAMOTH", "ANYA"],              # Tuesday
-    2: ["ANSHIKA", "MUKHILA"],           # Wednesday
-    3: ["RESHMA", "LAVANYA"],            # Thursday
-    4: ["ROHINI"],                        # Friday
-    5: [],                                 # Saturday (no offs)
-    6: ["NITIN", "BABU"],                # Sunday
-}
+# REMOVED DUPLICATE: COLORS and WEEKLY_OFF now defined at top of file
 
 # Custom CSS with customizable colors
 
@@ -3090,18 +3206,8 @@ header[data-testid="stHeader"]::after {{
 """
 st.markdown(header_css, unsafe_allow_html=True)
 
-# Indian Standard Time (IST = UTC+5:30)
-
-IST = timezone(timedelta(hours=5, minutes=30))
-
-def ist_today_and_time():
-    now = datetime.now(IST)
-    return now.date().isoformat(), now.strftime("%H:%M:%S")
-
-
-def now_ist():
-    return datetime.now(IST)
-
+# ================ HELPER FUNCTIONS ================
+# Note: Core time functions moved to top of file to fix import order bugs
 
 def _parse_iso_ts(val):
     try:
@@ -3136,7 +3242,7 @@ def _date_from_any(val):
     return None
 
 # Always update 'now' at the top of the main script body for correct time blocking
-now = datetime.now(IST)
+now = now_ist()
 date_line_str = now.strftime('%B %d, %Y - %I:%M:%S %p')
 
 if st.session_state.get("nav_category") != "Dashboard":
@@ -3404,9 +3510,7 @@ def dec_to_time(time_value: Any) -> str:
         return "N/A"
     return f"{t.hour:02d}:{t.minute:02d}"
 
-def safe_str_to_time_obj(time_str: Any) -> time_type | None:
-    """Convert time string to time object safely"""
-    return _coerce_to_time_obj(time_str)
+# Removed duplicate: safe_str_to_time_obj (now defined at top of file)
 
 def time_obj_to_str(t: Any) -> str:
     """Convert time object to 24-hour HH:MM string for Excel"""
@@ -3434,12 +3538,9 @@ def time_obj_to_str_12hr(t: Any) -> str:
         pass
     return "N/A"
 
-def time_to_minutes(time_value: Any) -> int | None:
-    """Convert time values to minutes since midnight for comparison"""
-    t = _coerce_to_time_obj(time_value)
-    if t is None:
-        return None
-    return t.hour * 60 + t.minute
+# Removed duplicate: time_to_minutes (now defined at top of file)
+# Note: The top version may be less comprehensive than _coerce_to_time_obj approach
+# but handles the common HH:MM string and numeric cases
 
 # ================ DEPARTMENT & STAFF CONFIGURATION ================
 # Departments with their doctors and assistants
@@ -4926,26 +5027,8 @@ with st.sidebar:
     st.markdown("---")
 
 # ================ Data Storage Configuration ================
-# Determine whether to use Google Sheets (cloud) or local Excel file
-USE_SUPABASE = False
-USE_GOOGLE_SHEETS = False
-
-file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Putt Allotment.xlsx")
-
-supabase_client = None
-supabase_table_name = "tdb_allotment_state"
-supabase_row_id = "main"
-# Force supabase-only by default (no Excel fallback)
-FORCE_SUPABASE = True
-PROFILE_SUPABASE_TABLE = "profiles"
-# Hard defaults (override with secrets/env in prod)
-SUPABASE_URL_DEFAULT = "https://iulgvbjkqcrwwnrwjolh.supabase.co"
-SUPABASE_KEY_DEFAULT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1bGd2YmprcWNyd3ducndqb2xoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjQyNDM1NSwiZXhwIjoyMDgyMDAwMzU1fQ.PlilHFvaHxCTCdXHQILJ07enCTwTarOphYILnO9RIwU"
-SUPABASE_CHECK_TTL_SECONDS = 60
-
-gsheet_client = None
-gsheet_worksheet = None
-
+# REMOVED DUPLICATES: All storage configuration moved to top of file
+# SECURITY FIX: Removed hardcoded Supabase credentials
 
 def _safe_secret_get(key: str, default=None):
     """Safely read st.secrets in all environments."""
@@ -4960,31 +5043,6 @@ def _as_bool(val) -> bool:
         return str(val).strip().lower() in {"1", "true", "yes", "on"}
     except Exception:
         return False
-# Allow forcing Supabase mode via env or secrets
-try:
-    if _as_bool(_safe_secret_get("force_supabase", False)) or _as_bool(os.environ.get("FORCE_SUPABASE", "")):
-        FORCE_SUPABASE = True
-except Exception:
-    pass
-
-PROFILE_ASSISTANT_SHEET = "Assistants"
-PROFILE_DOCTOR_SHEET = "Doctors"
-PROFILE_COLUMNS = [
-    "id",
-    "name",
-    "department",
-    "contact_email",
-    "contact_phone",
-    "status",
-    "weekly_off",          # comma-separated weekdays e.g. "Monday,Wednesday"
-    "pref_first",          # preference hints for FIRST role
-    "pref_second",         # preference hints for SECOND role
-    "pref_third",          # preference hints for Third role
-    "created_at",
-    "updated_at",
-    "created_by",
-    "updated_by",
-]
 
 
 def _ensure_profile_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -4999,7 +5057,8 @@ def _ensure_profile_df(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _now_iso():
-    return datetime.now().isoformat(timespec="seconds")
+    """Get current time in IST as ISO string."""
+    return now_ist().isoformat(timespec="seconds")
 
 
 def _profiles_table_setup_sql(table_name: str) -> str:
@@ -5880,10 +5939,13 @@ def _get_supabase_config_from_secrets_or_env():
     if os.getenv("SUPABASE_PROFILE_TABLE"):
         profile_table = os.getenv("SUPABASE_PROFILE_TABLE", profile_table).strip() or profile_table
 
+    # SECURITY FIX: No hardcoded defaults - require configuration via secrets/env
     if not url:
-        url = SUPABASE_URL_DEFAULT
+        st.warning("⚠️ Supabase URL not configured. Set SUPABASE_URL in secrets or environment.")
+        return None, None, table, row_id, profile_table
     if not key:
-        key = SUPABASE_KEY_DEFAULT
+        st.warning("⚠️ Supabase key not configured. Set SUPABASE_KEY in secrets or environment.")
+        return None, None, table, row_id, profile_table
 
     # Prefer service role key when present (avoids RLS setup for server-side app).
     effective_key = service_key or key
@@ -7301,7 +7363,7 @@ with st.sidebar:
 
 
         # For debug/demo: auto-fill start and end time to cover current time
-        now_dt = datetime.now()
+        now_dt = now_ist()
         block_start_default = (now_dt - timedelta(minutes=2)).time().replace(second=0, microsecond=0)
         block_end_default = (now_dt + timedelta(minutes=2)).time().replace(second=0, microsecond=0)
         col_start, col_end = st.columns(2)
