@@ -5761,13 +5761,18 @@ if (not USE_SUPABASE) and (not USE_GOOGLE_SHEETS):
         or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
         or os.environ.get("SUPABASE_KEY")
     )
-    if SUPABASE_AVAILABLE and sup_url_hint and sup_key_hint:
+    # Only enable Supabase if library is available AND credentials are valid
+    if SUPABASE_AVAILABLE and sup_url_hint and sup_key_hint and sup_url_hint.strip() and sup_key_hint.strip():
         USE_SUPABASE = True
+        st.sidebar.success("🔗 Connected to Supabase")
     else:
         gsheet_url_hint = _safe_secret_get("spreadsheet_url") or os.environ.get("SPREADSHEET_URL")
         gcp_sa_hint = _safe_secret_get("gcp_service_account")
         if GSHEETS_AVAILABLE and gsheet_url_hint and gcp_sa_hint:
             USE_GOOGLE_SHEETS = True
+            st.sidebar.success("🔗 Connected to Google Sheets")
+        else:
+            st.sidebar.info("📁 Using local Excel file (no cloud storage configured)")
 
 
 def _normalize_service_account_info(raw_info: dict[str, Any]) -> dict[str, Any]:
@@ -5940,11 +5945,8 @@ def _get_supabase_config_from_secrets_or_env():
         profile_table = os.getenv("SUPABASE_PROFILE_TABLE", profile_table).strip() or profile_table
 
     # SECURITY FIX: No hardcoded defaults - require configuration via secrets/env
-    if not url:
-        st.warning("⚠️ Supabase URL not configured. Set SUPABASE_URL in secrets or environment.")
-        return None, None, table, row_id, profile_table
-    if not key:
-        st.warning("⚠️ Supabase key not configured. Set SUPABASE_KEY in secrets or environment.")
+    if not url or not key:
+        # Return None to indicate Supabase is not configured (caller should handle gracefully)
         return None, None, table, row_id, profile_table
 
     # Prefer service role key when present (avoids RLS setup for server-side app).
@@ -6387,9 +6389,13 @@ if FORCE_SUPABASE and not USE_SUPABASE:
                 supabase_row_id = sup_row
                 PROFILE_SUPABASE_TABLE = profile_table
                 USE_SUPABASE = True
-                st.sidebar.info("Supabase forced via config.")
-    except Exception:
-        pass
+                st.sidebar.info("🔗 Supabase forced via config")
+            else:
+                st.sidebar.warning("⚠️ Supabase client failed to initialize. Using local Excel.")
+        else:
+            st.sidebar.info("📁 Supabase not configured. Using local Excel file.")
+    except Exception as e:
+        st.sidebar.error(f"❌ Supabase config error: {e}. Using local Excel.")
 
 # Try to connect to Google Sheets if credentials are available (fallback)
 if (not USE_SUPABASE) and GSHEETS_AVAILABLE:
@@ -6829,19 +6835,38 @@ df_raw = None
 
 if USE_SUPABASE:
     sup_url, sup_key, sup_table, sup_row, _ = _get_supabase_config_from_secrets_or_env()
-    df_raw = load_data_from_supabase(sup_url, sup_key, sup_table, sup_row)
-    if df_raw is None:
-        st.error("⚠️ Failed to load data from Supabase.")
-        st.stop()
-elif USE_GOOGLE_SHEETS:
+    # Check if Supabase is actually configured
+    if sup_url and sup_key:
+        df_raw = load_data_from_supabase(sup_url, sup_key, sup_table, sup_row)
+        if df_raw is None:
+            st.warning("⚠️ Failed to load from Supabase. Falling back to local Excel file.")
+            USE_SUPABASE = False  # Disable for this session
+    else:
+        st.warning("⚠️ Supabase not configured. Falling back to local Excel file.")
+        USE_SUPABASE = False  # Disable for this session
+
+if not USE_SUPABASE and USE_GOOGLE_SHEETS:
     # Load from Google Sheets
     df_raw = load_data_from_gsheets(gsheet_worksheet)
     if df_raw is None:
-        st.error("⚠️ Failed to load data from Google Sheets.")
-        st.stop()
-else:
-    st.error("Excel backend disabled. Configure Supabase (recommended) or Google Sheets in secrets.")
-    st.stop()
+        st.warning("⚠️ Failed to load from Google Sheets. Falling back to local Excel file.")
+        USE_GOOGLE_SHEETS = False
+
+# Fallback to local Excel if cloud storage failed or not configured
+if df_raw is None:
+    st.info("📁 Using local Excel file: Putt Allotment.xlsx")
+    try:
+        if os.path.exists(file_path):
+            df_raw = pd.read_excel(file_path, engine="openpyxl")
+        else:
+            # Create new Excel file with expected columns
+            df_raw = pd.DataFrame(columns=_get_expected_columns())
+            df_raw.to_excel(file_path, index=False, engine="openpyxl")
+            st.success(f"✅ Created new Excel file: {file_path}")
+    except Exception as e:
+        st.error(f"❌ Failed to load/create Excel file: {e}")
+        # Create empty dataframe as last resort
+        df_raw = pd.DataFrame(columns=_get_expected_columns())
 
 # Track base save version/hash from storage unless we have local pending edits.
 loaded_meta = _get_meta_from_df(df_raw)
@@ -7122,9 +7147,16 @@ def save_data(dataframe, show_toast=True, message="Data saved!", *, ignore_confl
 
         if USE_SUPABASE:
             sup_url, sup_key, sup_table, sup_row, _ = _get_supabase_config_from_secrets_or_env()
-            success = save_data_to_supabase(sup_url, sup_key, sup_table, sup_row, dataframe)
-            if success and show_toast:
-                st.toast(message, icon="✅")
+            if sup_url and sup_key:
+                success = save_data_to_supabase(sup_url, sup_key, sup_table, sup_row, dataframe)
+                if success and show_toast:
+                    st.toast(message, icon="✅")
+            else:
+                st.warning("⚠️ Supabase not configured. Saving to local Excel instead.")
+                with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+                    dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
+                if show_toast:
+                    st.toast(f"{message} (local)", icon="💾")
         elif USE_GOOGLE_SHEETS:
             success = save_data_to_gsheets(gsheet_worksheet, dataframe)
             if success and show_toast:
