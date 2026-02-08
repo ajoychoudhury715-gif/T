@@ -5108,10 +5108,19 @@ def _render_profiles_setup_help(table_name: str, err: str | None = None) -> None
 
 
 def load_profiles(sheet_name: str) -> pd.DataFrame:
-    """Load assistant/doctor profiles (Supabase-first)."""
+    """Load assistant/doctor profiles (Supabase-first).
+
+    Performance: Results are cached by _load_profiles_cached wrapper
+    """
     if USE_SUPABASE and supabase_client is not None:
         try:
-            resp = supabase_client.table(PROFILE_SUPABASE_TABLE).select("*").eq("kind", sheet_name).execute()
+            # Optimized: Only fetch needed columns for faster query
+            resp = (
+                supabase_client.table(PROFILE_SUPABASE_TABLE)
+                .select("id,name,kind,department,status,weekly_off,pref_first,pref_second,pref_third")
+                .eq("kind", sheet_name)
+                .execute()
+            )
             data = resp.data or []
             df = pd.DataFrame(data)
             if df.empty:
@@ -5230,8 +5239,13 @@ def save_profiles(df: pd.DataFrame, sheet_name: str) -> bool:
         return False
 
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=600, show_spinner="Loading profiles...")
 def _load_profiles_cached(sheet_name: str, cache_bust: int) -> pd.DataFrame:
+    """Load profiles with aggressive caching (10 minutes).
+
+    Profiles don't change frequently, so we cache for longer to improve performance.
+    Use cache_bust parameter to force refresh when needed.
+    """
     return load_profiles(sheet_name)
 
 
@@ -6203,18 +6217,22 @@ def search_patients_from_supabase(
     return out
 
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=300, show_spinner="Loading data from Supabase...")
 def load_data_from_supabase(_url: str, _key: str, _table: str, _row_id: str):
     """Load dataframe payload from Supabase.
 
     Storage model: a single row with `id` and `payload` (jsonb).
     payload = {"columns": [...], "rows": [ {col: val, ...}, ... ]}
+
+    Performance: Cached for 5 minutes (300s) to minimize API calls
     """
     try:
         client = _get_supabase_client(_url, _key)
         if client is None:
             return None
-        resp = client.table(_table).select("payload").eq("id", _row_id).execute()
+
+        # Optimized query: only fetch payload field
+        resp = client.table(_table).select("payload").eq("id", _row_id).limit(1).execute()
 
         data = getattr(resp, "data", None)
         if not data:
@@ -6278,7 +6296,13 @@ def save_data_to_supabase(_url: str, _key: str, _table: str, _row_id: str, df: p
         except Exception:
             pass
         client.table(_table).upsert({"id": _row_id, "payload": payload}).execute()
-        load_data_from_supabase.clear()
+
+        # PERFORMANCE: Don't clear cache here - let TTL handle it
+        # Cache will auto-refresh after 5 minutes, preventing excessive API calls
+        # Only clear session cache to force reload on next access
+        if "cached_df_timestamp" in st.session_state:
+            st.session_state.cached_df_timestamp = 0  # Force reload from Streamlit cache
+
         return True
     except Exception as e:
         st.error(f"Error saving to Supabase: {e}")
@@ -6861,42 +6885,64 @@ def _row_has_changes(edited_row, base_row, compare_cols: list[str]) -> bool:
 
 
 # ================ Load Data ================
-df_raw = None
+# PERFORMANCE: Use session-based caching to reduce API calls across reruns
+def _get_cached_data():
+    """Get data with session-level caching for maximum performance."""
+    # Check if we have valid cached data in session
+    if "cached_df_raw" in st.session_state and "cached_df_timestamp" in st.session_state:
+        cached_time = st.session_state.get("cached_df_timestamp", 0)
+        current_time = time_module.time()
+        # Cache is valid for 2 minutes in session state (in addition to Streamlit cache)
+        if current_time - cached_time < 120:
+            return st.session_state.cached_df_raw
 
-if USE_SUPABASE:
-    sup_url, sup_key, sup_table, sup_row, _ = _get_supabase_config_from_secrets_or_env()
-    # Check if Supabase is actually configured
-    if sup_url and sup_key:
-        df_raw = load_data_from_supabase(sup_url, sup_key, sup_table, sup_row)
-        if df_raw is None:
-            st.warning("⚠️ Failed to load from Supabase. Falling back to local Excel file.")
-            USE_SUPABASE = False  # Disable for this session
-    else:
-        st.warning("⚠️ Supabase not configured. Falling back to local Excel file.")
-        USE_SUPABASE = False  # Disable for this session
+    # Load fresh data
+    df_raw = None
 
-if not USE_SUPABASE and USE_GOOGLE_SHEETS:
-    # Load from Google Sheets
-    df_raw = load_data_from_gsheets(gsheet_worksheet)
-    if df_raw is None:
-        st.warning("⚠️ Failed to load from Google Sheets. Falling back to local Excel file.")
-        USE_GOOGLE_SHEETS = False
-
-# Fallback to local Excel if cloud storage failed or not configured
-if df_raw is None:
-    st.info("📁 Using local Excel file: Putt Allotment.xlsx")
-    try:
-        if os.path.exists(file_path):
-            df_raw = pd.read_excel(file_path, engine="openpyxl")
+    if USE_SUPABASE:
+        sup_url, sup_key, sup_table, sup_row, _ = _get_supabase_config_from_secrets_or_env()
+        # Check if Supabase is actually configured
+        if sup_url and sup_key:
+            df_raw = load_data_from_supabase(sup_url, sup_key, sup_table, sup_row)
+            if df_raw is None:
+                st.warning("⚠️ Failed to load from Supabase. Falling back to local Excel file.")
+                USE_SUPABASE = False  # Disable for this session
         else:
-            # Create new Excel file with expected columns
+            st.warning("⚠️ Supabase not configured. Falling back to local Excel file.")
+            USE_SUPABASE = False  # Disable for this session
+
+    if not USE_SUPABASE and USE_GOOGLE_SHEETS:
+        # Load from Google Sheets
+        df_raw = load_data_from_gsheets(gsheet_worksheet)
+        if df_raw is None:
+            st.warning("⚠️ Failed to load from Google Sheets. Falling back to local Excel file.")
+            USE_GOOGLE_SHEETS = False
+
+    # Fallback to local Excel if cloud storage failed or not configured
+    if df_raw is None:
+        st.info("📁 Using local Excel file: Putt Allotment.xlsx")
+        try:
+            if os.path.exists(file_path):
+                df_raw = pd.read_excel(file_path, engine="openpyxl")
+            else:
+                # Create new Excel file with expected columns
+                df_raw = pd.DataFrame(columns=_get_expected_columns())
+                df_raw.to_excel(file_path, index=False, engine="openpyxl")
+                st.success(f"✅ Created new Excel file: {file_path}")
+        except Exception as e:
+            st.error(f"❌ Failed to load/create Excel file: {e}")
+            # Create empty dataframe as last resort
             df_raw = pd.DataFrame(columns=_get_expected_columns())
-            df_raw.to_excel(file_path, index=False, engine="openpyxl")
-            st.success(f"✅ Created new Excel file: {file_path}")
-    except Exception as e:
-        st.error(f"❌ Failed to load/create Excel file: {e}")
-        # Create empty dataframe as last resort
-        df_raw = pd.DataFrame(columns=_get_expected_columns())
+
+    # Store in session cache
+    if df_raw is not None:
+        st.session_state.cached_df_raw = df_raw
+        st.session_state.cached_df_timestamp = time_module.time()
+
+    return df_raw
+
+# Use cached data loader
+df_raw = _get_cached_data()
 
 # Track base save version/hash from storage unless we have local pending edits.
 loaded_meta = _get_meta_from_df(df_raw)
