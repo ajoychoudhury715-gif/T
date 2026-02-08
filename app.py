@@ -1318,17 +1318,17 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
         .summary-bar {background: #f3f3f4; border: 1px solid #d9c5b2; border-radius: 14px; padding: 6px 10px; margin-top: 12px;}
         .compact-dashboard [data-testid="stVerticalBlock"] {gap: 0.5rem;}
         .compact-dashboard [data-testid="stHorizontalBlock"] {gap: 0.6rem;}
-        .schedule-cards {display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-top: 8px;}
-        .schedule-card {background:#f3f3f4; border:1px solid #d9c5b2; border-radius:18px; padding:14px; box-shadow:0 10px 20px rgba(20,17,15,0.08); display:flex; flex-direction:column; gap:10px; min-height:220px;}
+        .schedule-cards {display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top: 6px;}
+        .schedule-card {background:#f3f3f4; border:1px solid #d9c5b2; border-radius:14px; padding:10px; box-shadow:0 6px 14px rgba(20,17,15,0.06); display:flex; flex-direction:column; gap:8px; min-height:180px;}
         .card-shell-marker {display:none;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) {background:linear-gradient(180deg, #fefefe 0%, #edf0f5 100%); border:1px solid #e6ecf3; border-radius:28px; box-shadow:0 28px 58px rgba(18, 22, 32, 0.28); overflow:hidden;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) > div {padding:0; display:flex; flex-direction:column; gap:14px; min-height:260px;}
-        .card-inner {background:#fff; border-radius:24px; border:1px solid #eceff5; box-shadow:0 18px 32px rgba(22, 24, 31, 0.18); padding:0 22px 18px; display:flex; flex-direction:column; gap:10px;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) {background:linear-gradient(180deg, #fefefe 0%, #edf0f5 100%); border:1px solid #e6ecf3; border-radius:20px; box-shadow:0 20px 40px rgba(18, 22, 32, 0.22); overflow:hidden;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) > div {padding:0; display:flex; flex-direction:column; gap:10px; min-height:200px;}
+        .card-inner {background:#fff; border-radius:18px; border:1px solid #eceff5; box-shadow:0 12px 24px rgba(22, 24, 31, 0.14); padding:0 16px 12px; display:flex; flex-direction:column; gap:8px;}
         .card-inner .card-status-banner {margin-top:0;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) [data-testid="stHorizontalBlock"] {gap: 0.8rem; align-items:center; justify-content:flex-start;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) [data-testid="stHorizontalBlock"] {gap: 0.6rem; align-items:center; justify-content:flex-start;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stButton>button,
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) [data-testid="stButton"] > button,
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind] {height: 18px !important; border-radius: 10px !important; font-weight: 700; text-transform: none; letter-spacing: 0; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; min-width: 60px; padding: 0 6px !important; font-size: 10px; line-height: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; gap: 4px; width: 100%; box-shadow: 0 6px 14px rgba(22, 24, 31, 0.14); color:#3f434a;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind] {height: 16px !important; border-radius: 8px !important; font-weight: 600; text-transform: none; letter-spacing: 0; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; min-width: 55px; padding: 0 5px !important; font-size: 9px; line-height: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; gap: 3px; width: 100%; box-shadow: 0 4px 10px rgba(22, 24, 31, 0.12); color:#3f434a;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stButton>button *,
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind] * {white-space: nowrap;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) {flex-wrap: wrap; row-gap: 0.5rem; align-items:center; justify-content:flex-end;}
@@ -1338,10 +1338,10 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
             div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) > div {flex: 0 0 auto;}
         }
         .card-actions-row {
-            margin-top: 10px;
+            margin-top: 8px;
             display: flex;
             flex-wrap: wrap;
-            gap: 0.75rem;
+            gap: 0.5rem;
             align-items: center;
             justify-content: flex-start;
         }
@@ -1349,14 +1349,16 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
             margin: 0;
         }
         .card-actions-row .stCheckbox label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             letter-spacing: 0.1px;
         }
         .card-actions-row .stButton>button,
         .card-actions-row button[kind] {
-            min-width: 80px;
-            border-radius: 12px !important;
+            min-width: 70px;
+            border-radius: 10px !important;
+            height: 30px !important;
+            font-size: 12px !important;
         }
         .card-actions-row div[data-testid="stHorizontalBlock"] {align-items:center;}
         .card-actions-row div[data-testid="stHorizontalBlock"]:has(.stCheckbox) {justify-content:flex-start !important;}
@@ -1365,38 +1367,38 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
         .card-actions-row div[data-testid="column"]:has(.card-action-edit),
         .card-actions-row div[data-testid="column"]:has(.card-action-cancel) {min-width: 72px;}
         .card-details-row {
-            margin-top: 10px;
+            margin-top: 8px;
             border: 1px solid #d9dde3;
-            border-radius: 14px;
-            padding: 6px 10px;
+            border-radius: 12px;
+            padding: 5px 8px;
             background: #fff;
-            box-shadow: 0 10px 20px rgba(24, 28, 36, 0.12);
+            box-shadow: 0 6px 14px rgba(24, 28, 36, 0.10);
         }
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox {margin-top: 10px;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox label {font-size: 14px; font-weight: 600; color:#2f333a; letter-spacing:0.1px; text-transform:none; white-space: normal; line-height: 1.4;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox {margin-top: 8px;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox label {font-size: 13px; font-weight: 600; color:#2f333a; letter-spacing:0.1px; text-transform:none; white-space: normal; line-height: 1.3;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] > div,
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] > label > div {width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid #c3c8d0; background: #ffffff;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] > label > div {width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid #c3c8d0; background: #ffffff;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] input:checked + div {background:#2f63e8; border-color:#2f63e8;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="primary"] {background:#2f63e8 !important; border:1px solid #2f63e8 !important; color:#ffffff !important; box-shadow:0 10px 24px rgba(47,99,232,0.32) !important;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="secondary"] {background:#ffffff !important; border:1px solid #d5d8de !important; color:#4b4f56 !important; box-shadow:0 6px 14px rgba(24, 28, 36, 0.08) !important;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="column"]:has(.card-action-cancel) button {border-color:#e1b0b0 !important; color:#b15454 !important; background:#ffffff !important;}
         .card-action-marker {display:none;}
-        .card-status-banner {display:flex; align-items:center; gap:10px; padding:12px 0 14px 0; border-radius:20px 20px 16px 16px; font-weight:800; font-size:13px; letter-spacing:0.8px; text-transform:uppercase; margin:0 -22px 12px -22px; background:linear-gradient(90deg, #fff3d3, #fef5de);}
+        .card-status-banner {display:flex; align-items:center; gap:8px; padding:10px 0 12px 0; border-radius:16px 16px 14px 14px; font-weight:800; font-size:11px; letter-spacing:0.6px; text-transform:uppercase; margin:0 -16px 10px -16px; background:linear-gradient(90deg, #fff3d3, #fef5de);}
         .card-status-banner.waiting {color:#8a775b;}
         .card-status-banner.ongoing {background:linear-gradient(90deg, #dee5ff, #eff2ff); color:#2f4f86;}
         .card-status-banner.arrived {background:linear-gradient(90deg, #edf0f1, #f5f7fa); color:#50545a;}
         .card-status-banner.completed {background:linear-gradient(90deg, #def3e6, #eef8f1); color:#3d6b4a;}
         .card-status-banner.cancelled {background:linear-gradient(90deg, #f4d5d6, #fde8e8); color:#9a4b4b;}
-        .status-dot {width:16px; height:16px; border-radius:50%;}
-        .card-status-banner.waiting .status-dot {background:#f1b400; box-shadow:0 0 0 4px rgba(241,180,0,0.28);}
-        .card-status-banner.ongoing .status-dot {background:#3b6fd8; box-shadow:0 0 0 4px rgba(59,111,216,0.28);}
-        .card-status-banner.arrived .status-dot {background:#7a7a7a; box-shadow:0 0 0 4px rgba(122,122,122,0.28);}
-        .card-status-banner.completed .status-dot {background:#4caf6b; box-shadow:0 0 0 4px rgba(76,175,107,0.28);}
-        .card-status-banner.cancelled .status-dot {background:#d45c5c; box-shadow:0 0 0 4px rgba(212,92,92,0.28);}
-        .card-head {display:flex; align-items:center; gap:16px;}
-        .card-title {display:flex; flex-direction:column; gap:3px;}
-        .card-avatar {width:56px; height:56px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #f6e4c9, #e4cca4); border:1px solid #ead8be; color:#5d4a35; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);}
-        .card-name {font-size:18px; font-weight:800; color:#2a2d33; letter-spacing:0.4px; text-transform:uppercase;}
+        .status-dot {width:12px; height:12px; border-radius:50%;}
+        .card-status-banner.waiting .status-dot {background:#f1b400; box-shadow:0 0 0 3px rgba(241,180,0,0.24);}
+        .card-status-banner.ongoing .status-dot {background:#3b6fd8; box-shadow:0 0 0 3px rgba(59,111,216,0.24);}
+        .card-status-banner.arrived .status-dot {background:#7a7a7a; box-shadow:0 0 0 3px rgba(122,122,122,0.24);}
+        .card-status-banner.completed .status-dot {background:#4caf6b; box-shadow:0 0 0 3px rgba(76,175,107,0.24);}
+        .card-status-banner.cancelled .status-dot {background:#d45c5c; box-shadow:0 0 0 3px rgba(212,92,92,0.24);}
+        .card-head {display:flex; align-items:center; gap:12px;}
+        .card-title {display:flex; flex-direction:column; gap:2px;}
+        .card-avatar {width:44px; height:44px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #f6e4c9, #e4cca4); border:1px solid #ead8be; color:#5d4a35; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);}
+        .card-name {font-size:15px; font-weight:800; color:#2a2d33; letter-spacing:0.3px; text-transform:uppercase;}
         .card-time {font-size:13px; color:#6f757d;}
         .card-info {display:flex; flex-direction:column; gap:8px;}
         .info-row {display:flex; align-items:center; gap:10px;}
@@ -8449,10 +8451,10 @@ if category == "Scheduling":
             div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="stHorizontalBlock"]:has(.card-action-marker) > div {min-width: 100px; flex: 0 0 auto;}
         }
         .card-actions-row {
-            margin-top: 10px;
+            margin-top: 8px;
             display: flex;
             flex-wrap: wrap;
-            gap: 0.75rem;
+            gap: 0.5rem;
             align-items: center;
             justify-content: flex-start;
         }
@@ -8460,14 +8462,16 @@ if category == "Scheduling":
             margin: 0;
         }
         .card-actions-row .stCheckbox label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             letter-spacing: 0.1px;
         }
         .card-actions-row .stButton>button,
         .card-actions-row button[kind] {
-            min-width: 80px;
-            border-radius: 12px !important;
+            min-width: 70px;
+            border-radius: 10px !important;
+            height: 30px !important;
+            font-size: 12px !important;
         }
         .card-actions-row div[data-testid="stHorizontalBlock"] {align-items:center;}
         .card-actions-row div[data-testid="stHorizontalBlock"]:has(.stCheckbox) {justify-content:flex-start !important;}
