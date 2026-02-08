@@ -6888,6 +6888,8 @@ def _row_has_changes(edited_row, base_row, compare_cols: list[str]) -> bool:
 # PERFORMANCE: Use session-based caching to reduce API calls across reruns
 def _get_cached_data():
     """Get data with session-level caching for maximum performance."""
+    global USE_SUPABASE, USE_GOOGLE_SHEETS  # Need to modify these globals
+
     # Check if we have valid cached data in session
     if "cached_df_raw" in st.session_state and "cached_df_timestamp" in st.session_state:
         cached_time = st.session_state.get("cached_df_timestamp", 0)
