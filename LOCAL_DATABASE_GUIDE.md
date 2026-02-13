@@ -36,9 +36,8 @@ streamlit run app.py
 
 The app will:
 1. ✅ Check for Supabase (disabled)
-2. ✅ Check for Google Sheets (disabled)
-3. ✅ **Use local Excel file** (enabled!)
-4. ✅ Create `Putt Allotment.xlsx` if it doesn't exist
+2. ✅ **Use local Excel file** (enabled!)
+3. ✅ Create `Putt Allotment.xlsx` if it doesn't exist
 
 You'll see in the sidebar:
 ```
@@ -89,28 +88,23 @@ copy "Putt Allotment_backup_2024-01-15.xlsx" "Putt Allotment.xlsx"
 ### **Current Setup (Local Only):**
 ```python
 USE_SUPABASE = False
-USE_GOOGLE_SHEETS = False
 FORCE_SUPABASE = False
 ```
 
 ### **Enable Supabase (Cloud):**
 ```python
-# In app.py line 143-145
+# In app.py line 143-144
 USE_SUPABASE = False
-USE_GOOGLE_SHEETS = False
 FORCE_SUPABASE = True  # ← Change this to True
 
 # Then configure secrets (see below)
 ```
 
-### **Enable Google Sheets:**
-```python
+**Supabase Secrets Configuration:**
+```toml
 # In .streamlit/secrets.toml
-spreadsheet_url = "your-sheet-url"
-[gcp_service_account]
-type = "service_account"
-project_id = "your-project"
-# ... other credentials
+supabase_url = "https://your-project.supabase.co"
+supabase_service_role_key = "your-service-role-key"
 ```
 
 ---
@@ -332,7 +326,7 @@ c:\Users\arian\Desktop\MY APPS\T\T\Putt Allotment.xlsx
 
 **Best practice:**
 ```
-Local Excel (primary) + Cloud backup (Supabase/Google Sheets)
+Local Excel (primary) + Cloud backup (Supabase)
 ```
 
 This gives you:
