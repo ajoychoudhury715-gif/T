@@ -36,20 +36,10 @@ except Exception:
 
 SUPABASE_AVAILABLE = _supabase_available
 
-# Google Sheets integration for persistent cloud storage
-_gsheets_available = False
-try:
-    import gspread
-    from google.oauth2.service_account import Credentials
-    _gsheets_available = True
-except ImportError:
-    pass
-
-GSHEETS_AVAILABLE = _gsheets_available
 
 # To install required packages, run in your terminal:
 # pip install --upgrade pip
-# pip install pandas openpyxl streamlit gspread google-auth
+# pip install pandas openpyxl streamlit supabase
 
 # Page config
 st.set_page_config(page_title="THE DENTAL BOND", layout="wide", initial_sidebar_state="expanded")
@@ -142,7 +132,6 @@ PROFILE_COLUMNS = [
 # Storage flags (will be updated based on configuration)
 # FORCE LOCAL MODE: Set to False to use only local Excel files
 USE_SUPABASE = False
-USE_GOOGLE_SHEETS = False
 FORCE_SUPABASE = False  # Changed from True - disables cloud storage
 
 # Attendance configuration
@@ -154,10 +143,6 @@ supabase_client = None
 supabase_table_name = "tdb_allotment_state"
 supabase_row_id = "main"
 SUPABASE_CHECK_TTL_SECONDS = 60
-
-# Google Sheets configuration
-gsheet_client = None
-gsheet_worksheet = None
 
 # Session state initialization for profiles
 if "profiles_cache_bust" not in st.session_state:
@@ -5768,9 +5753,8 @@ def render_profile_manager(sheet_name: str, entity_label: str, dept_label: str) 
             st.rerun()
 
 
-# Auto-select backend for Streamlit Cloud:
-# Prefer Supabase when configured, else Google Sheets, else local Excel.
-if (not USE_SUPABASE) and (not USE_GOOGLE_SHEETS):
+# Auto-select backend: Supabase if configured, else local Excel
+if not USE_SUPABASE:
     sup_url_hint = _safe_secret_get("supabase_url") or os.environ.get("SUPABASE_URL")
     sup_key_hint = (
         _safe_secret_get("supabase_service_role_key")
@@ -5783,139 +5767,7 @@ if (not USE_SUPABASE) and (not USE_GOOGLE_SHEETS):
         USE_SUPABASE = True
         st.sidebar.success("🔗 Connected to Supabase")
     else:
-        gsheet_url_hint = _safe_secret_get("spreadsheet_url") or os.environ.get("SPREADSHEET_URL")
-        gcp_sa_hint = _safe_secret_get("gcp_service_account")
-        if GSHEETS_AVAILABLE and gsheet_url_hint and gcp_sa_hint:
-            USE_GOOGLE_SHEETS = True
-            st.sidebar.success("🔗 Connected to Google Sheets")
-        else:
-            st.sidebar.info("📁 Using local Excel file (no cloud storage configured)")
-
-
-def _normalize_service_account_info(raw_info: dict[str, Any]) -> dict[str, Any]:
-    """Normalize Streamlit secrets into a dict suitable for google-auth.
-
-    Streamlit secrets are often pasted with either literal "\n" sequences or
-    TOML multiline strings. This normalizes the private key so google-auth can
-    parse it reliably.
-    """
-    info = dict(raw_info or {})
-    private_key = info.get("private_key")
-    if isinstance(private_key, str):
-        # Strip surrounding whitespace
-        private_key = private_key.strip()
-        # Handle accidental bytes-literal formatting: b'...'
-        if (private_key.startswith("b'") and private_key.endswith("'")) or (
-            private_key.startswith('b"') and private_key.endswith('"')
-        ):
-            private_key = private_key[2:-1]
-        # Convert escaped newlines into real newlines if needed
-        if "\\n" in private_key and "\n" not in private_key:
-            private_key = private_key.replace("\\n", "\n")
-        # Normalize Windows newlines
-        private_key = private_key.replace("\r\n", "\n").replace("\r", "\n")
-        # Remove accidental leading/trailing quotes from copy/paste
-        if (private_key.startswith('"') and private_key.endswith('"')) or (
-            private_key.startswith("'") and private_key.endswith("'")
-        ):
-            private_key = private_key[1:-1]
-
-        # If the key is multi-line, strip per-line indentation/spaces.
-        # Streamlit Secrets UI and some editors sometimes add leading spaces.
-        if "\n" in private_key:
-            lines = private_key.split("\n")
-            cleaned_lines: list[str] = []
-            for line in lines:
-                if not line:
-                    cleaned_lines.append("")
-                    continue
-                stripped = line.strip()
-                # Remove interior spaces from base64 lines (but not header/footer)
-                if not stripped.startswith("-----BEGIN") and not stripped.startswith("-----END"):
-                    stripped = stripped.replace(" ", "")
-                cleaned_lines.append(stripped)
-            private_key = "\n".join(cleaned_lines).strip("\n")
-
-        # If BEGIN/END are present but the key is pasted on one line, force newlines.
-        # This frequently happens when pasting into Streamlit Secrets.
-        if "BEGIN PRIVATE KEY" in private_key and "END PRIVATE KEY" in private_key:
-            private_key = re.sub(r"-----BEGIN PRIVATE KEY-----\s*", "-----BEGIN PRIVATE KEY-----\n", private_key)
-            private_key = re.sub(r"\s*-----END PRIVATE KEY-----", "\n-----END PRIVATE KEY-----", private_key)
-            private_key = re.sub(r"\n{3,}", "\n\n", private_key)
-            if not private_key.endswith("\n"):
-                private_key += "\n"
-        info["private_key"] = private_key
-    return info
-
-
-def _get_service_account_info_from_secrets(secrets_obj: Any) -> dict[str, Any]:
-    """Support multiple Streamlit secrets shapes.
-
-    Supported:
-    - [gcp_service_account] table (dict)
-    - gcp_service_account_json = "{...}" (string containing JSON)
-    - gcp_service_account = "{...}" (string containing JSON)
-    """
-    if not secrets_obj:
-        raise ValueError("Streamlit secrets are not available.")
-
-    if "gcp_service_account" in secrets_obj:
-        sa = secrets_obj["gcp_service_account"]
-        if isinstance(sa, dict):
-            return sa
-        if isinstance(sa, str):
-            try:
-                return json.loads(sa)
-            except json.JSONDecodeError as e:
-                raise ValueError(
-                    "`gcp_service_account` is present but is not a TOML table/dict and is not valid JSON. "
-                    f"JSON error at line {e.lineno}, column {e.colno}: {e.msg}. "
-                    "Prefer using a TOML table: [gcp_service_account]."
-                ) from e
-            except Exception as e:
-                raise ValueError(
-                    "`gcp_service_account` is present but could not be parsed. Prefer using a TOML table: [gcp_service_account]."
-                ) from e
-
-    if "gcp_service_account_json" in secrets_obj:
-        sa_json = secrets_obj.get("gcp_service_account_json")
-        # Some users paste an inline TOML table instead of a JSON string; Streamlit may parse it as a dict.
-        if isinstance(sa_json, dict):
-            return sa_json
-        if isinstance(sa_json, str) and sa_json.strip():
-            try:
-                return json.loads(sa_json)
-            except json.JSONDecodeError as e:
-                raise ValueError(
-                    "`gcp_service_account_json` is not valid JSON. "
-                    f"JSON error at line {e.lineno}, column {e.colno}: {e.msg}. "
-                    "Fix common issues: use double-quotes, remove trailing commas, keep the outer { } braces."
-                ) from e
-            except Exception as e:
-                raise ValueError(
-                    "`gcp_service_account_json` could not be parsed. Paste the full service account JSON exactly."
-                ) from e
-
-    raise ValueError(
-        "Missing Google service account secrets. Add a [gcp_service_account] section (recommended) "
-        "or `gcp_service_account_json`."
-    )
-
-
-def _open_spreadsheet(client, spreadsheet_ref: str):
-    """Open a spreadsheet by URL or by key/id.
-
-    `spreadsheet_ref` may be:
-    - Full URL: https://docs.google.com/spreadsheets/d/<ID>/edit
-    - Just the ID/key: <ID>
-    """
-    ref = (spreadsheet_ref or "").strip()
-    if not ref:
-        raise ValueError("Missing `spreadsheet_url`. Paste the Google Sheet URL or its Spreadsheet ID.")
-    if ref.startswith("http://") or ref.startswith("https://"):
-        return client.open_by_url(ref)
-    # Looks like a spreadsheet key/id
-    return client.open_by_key(ref)
+        st.sidebar.info("📁 Using local Excel file (no cloud storage configured)")
 
 
 def _get_supabase_config_from_secrets_or_env():
@@ -6317,16 +6169,6 @@ def save_data_to_supabase(_url: str, _key: str, _table: str, _row_id: str, df: p
         return False
 
 
-def _validate_service_account_info(info: dict) -> list[str]:
-    missing: list[str] = []
-    if not isinstance(info, dict) or not info:
-        return ["gcp_service_account"]
-    required = ["type", "project_id", "private_key", "client_email"]
-    for k in required:
-        if not str(info.get(k, "")).strip():
-            missing.append(k)
-    return missing
-
 # Try to connect to Supabase if credentials are available
 # PERFORMANCE: Only run full initialization once per session
 if SUPABASE_AVAILABLE:
@@ -6495,332 +6337,6 @@ if FORCE_SUPABASE and not USE_SUPABASE:
     except Exception as e:
         st.sidebar.error(f"❌ Supabase config error: {e}. Using local Excel.")
 
-# Try to connect to Google Sheets if credentials are available (fallback)
-if (not USE_SUPABASE) and GSHEETS_AVAILABLE:
-    try:
-        # Check if running on Streamlit Cloud with secrets
-        service_account_info = None
-        spreadsheet_ref = ""
-
-        if hasattr(st, 'secrets'):
-            if (('gcp_service_account' in st.secrets) or ('gcp_service_account_json' in st.secrets)):
-                service_account_info = _normalize_service_account_info(_get_service_account_info_from_secrets(st.secrets))
-            spreadsheet_ref = str(st.secrets.get("spreadsheet_url", "") or "").strip()
-
-        # Optional env-var support (useful for local runs or advanced deployments)
-        if not service_account_info:
-            env_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON", "").strip()
-            if env_json:
-                try:
-                    service_account_info = _normalize_service_account_info(json.loads(env_json))
-                except Exception as e:
-                    raise ValueError("GCP_SERVICE_ACCOUNT_JSON is set but is not valid JSON.") from e
-        if not spreadsheet_ref:
-            spreadsheet_ref = os.getenv("SPREADSHEET_URL", "").strip()
-
-        if service_account_info:
-            missing_fields = _validate_service_account_info(service_account_info)
-            if missing_fields:
-                raise ValueError(f"Service account is missing required fields: {', '.join(missing_fields)}")
-
-            # Basic validation to provide clearer errors than "Invalid base64..."
-            pk = str(service_account_info.get("private_key", ""))
-            # Safe diagnostics (no secret values) to help users self-debug Streamlit secrets.
-            _sa_diag = {
-                "has_type": bool(str(service_account_info.get("type", "")).strip()),
-                "type": str(service_account_info.get("type", ""))[:40],
-                "has_client_email": bool(str(service_account_info.get("client_email", "")).strip()),
-                "has_project_id": bool(str(service_account_info.get("project_id", "")).strip()),
-                "private_key_len": len(pk) if isinstance(pk, str) else 0,
-                "private_key_has_begin": "BEGIN PRIVATE KEY" in pk,
-                "private_key_has_end": "END PRIVATE KEY" in pk,
-            }
-
-            if _sa_diag["type"] and _sa_diag["type"] != "service_account":
-                raise ValueError(
-                    "Secrets do not look like a Google *service account* JSON (type is not 'service_account'). "
-                    "Make sure you downloaded a Service Account key (JSON) from Google Cloud Console."
-                )
-            if "BEGIN PRIVATE KEY" not in pk or "END PRIVATE KEY" not in pk:
-                raise ValueError(
-                    "Service account private_key is missing BEGIN/END markers. "
-                    "In Streamlit secrets, paste it as a TOML multiline string using triple quotes (\"\"\")."
-                )
-
-            credentials = Credentials.from_service_account_info(
-                service_account_info,
-                scopes=[
-                    "https://www.googleapis.com/auth/spreadsheets",
-                    "https://www.googleapis.com/auth/drive"
-                ]
-            )
-            gsheet_client = gspread.authorize(credentials)
-            
-            # Open spreadsheet by URL or ID
-            if spreadsheet_ref:
-                spreadsheet = _open_spreadsheet(gsheet_client, spreadsheet_ref)
-                gsheet_worksheet = spreadsheet.sheet1
-                USE_GOOGLE_SHEETS = True
-                st.sidebar.success("☁️ Connected to Google Sheets")
-    except Exception as e:
-        # Show a more actionable hint for the most common failure mode.
-        msg = str(e)
-        hint = ""
-        if "Invalid base64" in msg or "base64" in msg.lower():
-            hint = (
-                "\n\nHint: This usually means the service account `private_key` was pasted with broken newlines "
-                "or an extra character. Re-download a NEW JSON key from Google Cloud and paste the `private_key` "
-                "using TOML triple quotes (\"\"\")."
-            )
-        elif "No key could be detected" in msg or "Could not deserialize key data" in msg:
-            hint = (
-                "\n\nHint: Your `private_key` value is not being parsed as a valid PEM key. "
-                "In Streamlit secrets, paste `private_key` as a multiline TOML string using triple quotes (\"\"\"). "
-                "Make sure it contains the exact lines '-----BEGIN PRIVATE KEY-----' and '-----END PRIVATE KEY-----'."
-            )
-        # Add safe diagnostics to reduce guesswork without exposing secrets.
-        diag_text = ""
-        try:
-            if 'service_account_info' in locals() and isinstance(service_account_info, dict):
-                pk_local = str(service_account_info.get("private_key", ""))
-                diag = {
-                    "has_gcp_service_account": True,
-                    "type": str(service_account_info.get("type", ""))[:40],
-                    "has_client_email": bool(str(service_account_info.get("client_email", "")).strip()),
-                    "has_project_id": bool(str(service_account_info.get("project_id", "")).strip()),
-                    "private_key_len": len(pk_local),
-                    "has_begin": "BEGIN PRIVATE KEY" in pk_local,
-                    "has_end": "END PRIVATE KEY" in pk_local,
-                }
-                diag_text = "\n\nDiagnostics (safe): " + ", ".join([f"{k}={v}" for k, v in diag.items()])
-            else:
-                diag_text = "\n\nDiagnostics (safe): has_gcp_service_account=False"
-        except Exception:
-            pass
-
-        # Safe view of which *secret keys* Streamlit can see (names only, no values)
-        secrets_keys_text = ""
-        try:
-            if hasattr(st, 'secrets'):
-                keys = sorted(list(st.secrets.keys()))
-                # Avoid dumping a huge list; this app only cares about these.
-                interesting = [
-                    "spreadsheet_url",
-                    "gcp_service_account",
-                    "gcp_service_account_json",
-                ]
-                present = {k: (k in st.secrets) for k in interesting}
-                secrets_keys_text = "\n\nSecrets keys (safe): " + ", ".join([f"{k}={v}" for k, v in present.items()])
-            else:
-                secrets_keys_text = "\n\nSecrets keys (safe): st.secrets not available"
-        except Exception:
-            pass
-
-        st.sidebar.error(f"⚠️ Google Sheets connection failed: {msg}{hint}{diag_text}{secrets_keys_text}")
-        USE_GOOGLE_SHEETS = False
-
-        # Simple guided help (no secrets displayed)
-        with st.sidebar.expander("✅ Quick setup (simple)", expanded=False):
-            st.markdown(
-                "Use **one secret** instead of many fields:\n"
-                "- Add `spreadsheet_url` (full URL or just the sheet ID)\n"
-                "- Add `gcp_service_account_json` (paste the FULL service account JSON)\n\n"
-                "Example (Streamlit Cloud → Settings → Secrets):"
-            )
-            st.code(
-                'spreadsheet_url = "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit"\n\n'
-                'gcp_service_account_json = """{\n'
-                '  "type": "service_account",\n'
-                '  "project_id": "...",\n'
-                '  "private_key_id": "...",\n'
-                '  "private_key": "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n",\n'
-                '  "client_email": "...",\n'
-                '  "client_id": "...",\n'
-                '  "auth_uri": "https://accounts.google.com/o/oauth2/auth",\n'
-                '  "token_uri": "https://oauth2.googleapis.com/token",\n'
-                '  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",\n'
-                '  "client_x509_cert_url": "..."\n'
-                '}"""\n',
-                language="toml",
-            )
-            st.markdown(
-                "Also ensure:\n"
-                "- The Google Sheet is **shared** with the service account email (Editor)\n"
-                "- Google Sheets API + Google Drive API are enabled in Google Cloud"
-            )
-
-        # Optional: one-click test button (re-runs same logic and shows a concise result)
-        if st.sidebar.button("🔎 Test Google Sheets connection", key="test_gsheets_connection"):
-            try:
-                if not GSHEETS_AVAILABLE:
-                    raise RuntimeError("Google Sheets packages are not installed.")
-
-                # Re-read secrets/env inside the button click
-                _sa = None
-                _ref = ""
-                if hasattr(st, 'secrets'):
-                    if (('gcp_service_account' in st.secrets) or ('gcp_service_account_json' in st.secrets)):
-                        _sa = _normalize_service_account_info(_get_service_account_info_from_secrets(st.secrets))
-                    _ref = str(st.secrets.get("spreadsheet_url", "") or "").strip()
-                if not _sa:
-                    env_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON", "").strip()
-                    if env_json:
-                        _sa = _normalize_service_account_info(json.loads(env_json))
-                if not _ref:
-                    _ref = os.getenv("SPREADSHEET_URL", "").strip()
-
-                if not _sa:
-                    raise ValueError("Missing service account secret. Add [gcp_service_account] or gcp_service_account_json.")
-                missing = _validate_service_account_info(_sa)
-                if missing:
-                    raise ValueError(f"Service account missing fields: {', '.join(missing)}")
-
-                _pk = str(_sa.get("private_key", ""))
-                if "BEGIN PRIVATE KEY" not in _pk or "END PRIVATE KEY" not in _pk:
-                    raise ValueError("private_key missing BEGIN/END markers")
-
-                _creds = Credentials.from_service_account_info(
-                    _sa,
-                    scopes=[
-                        "https://www.googleapis.com/auth/spreadsheets",
-                        "https://www.googleapis.com/auth/drive"
-                    ],
-                )
-                _client = gspread.authorize(_creds)
-                _sheet = _open_spreadsheet(_client, _ref)
-                _ws = _sheet.sheet1
-                _ = _ws.row_values(1)
-                st.sidebar.success("✅ Test OK: connected and read the sheet")
-            except Exception as test_e:
-                # Add safe view of which secret keys exist to help diagnose missing secrets.
-                try:
-                    if hasattr(st, 'secrets'):
-                        interesting = [
-                            "spreadsheet_url",
-                            "gcp_service_account",
-                            "gcp_service_account_json",
-                        ]
-                        present = {k: (k in st.secrets) for k in interesting}
-                        st.sidebar.error(
-                            f"❌ Test failed: {test_e}\n\nSecrets keys (safe): "
-                            + ", ".join([f"{k}={v}" for k, v in present.items()])
-                        )
-                    else:
-                        st.sidebar.error(f"❌ Test failed: {test_e}\n\nSecrets keys (safe): st.secrets not available")
-                except Exception:
-                    st.sidebar.error(f"❌ Test failed: {test_e}")
-
-# Helper functions for Google Sheets
-@st.cache_data(ttl=30)  # Cache for 30 seconds to reduce API calls
-def load_data_from_gsheets(_worksheet):
-    """Load data from Google Sheets worksheet"""
-    try:
-        meta: dict = {}
-        try:
-            meta = load_meta_from_gsheets(_worksheet)
-        except Exception:
-            meta = {}
-
-        data = _worksheet.get_all_records()
-        if not data:
-            # Return empty dataframe with expected columns
-            df_empty = pd.DataFrame(columns=[
-                "Patient Name", "In Time", "Out Time", "Procedure", "DR.", 
-                "FIRST", "SECOND", "Third", "CASE PAPER", "OP", 
-                "SUCTION", "CLEANING", "STATUS", "REMINDER_ROW_ID",
-                "REMINDER_SNOOZE_UNTIL", "REMINDER_DISMISSED"
-            ])
-            df_empty.attrs["meta"] = meta
-            return df_empty
-        df = pd.DataFrame(data)
-        df.attrs["meta"] = meta
-        return df
-    except Exception as e:
-        st.error(f"Error loading from Google Sheets: {e}")
-        return None
-
-
-def _get_or_create_gsheets_meta_worksheet(_worksheet):
-    """Return the 'Meta' worksheet for the same spreadsheet, creating it if needed."""
-    # gspread worksheet has .spreadsheet
-    ss = getattr(_worksheet, "spreadsheet", None)
-    if ss is None:
-        raise RuntimeError("Unable to access spreadsheet from worksheet")
-    try:
-        return ss.worksheet("Meta")
-    except Exception:
-        try:
-            return ss.add_worksheet(title="Meta", rows=50, cols=2)
-        except Exception:
-            # Some environments disallow sheet creation; treat as non-fatal.
-            return None
-
-
-@st.cache_data(ttl=30)
-def load_meta_from_gsheets(_worksheet) -> dict:
-    """Load metadata from a 'Meta' worksheet (2 columns: key, value)."""
-    ws = _get_or_create_gsheets_meta_worksheet(_worksheet)
-    if ws is None:
-        return {}
-    values = ws.get_all_values()
-    if not values:
-        return {}
-
-    # Accept either with or without header row
-    meta: dict[str, str] = {}
-    start_row = 0
-    if len(values[0]) >= 2 and str(values[0][0]).strip().lower() in {"key", "k"}:
-        start_row = 1
-    for r in values[start_row:]:
-        if not r or len(r) < 2:
-            continue
-        k = str(r[0]).strip()
-        v = str(r[1]).strip()
-        if not k:
-            continue
-        meta[k] = v
-    return dict(meta)
-
-def save_data_to_gsheets(worksheet, df):
-    """Save dataframe to Google Sheets worksheet"""
-    try:
-        # Clear existing data
-        worksheet.clear()
-        
-        # Convert dataframe to list of lists for gspread
-        # Handle NaN/None values
-        df_clean = df.fillna("")
-        
-        # Convert all values to strings to avoid serialization issues
-        for col in df_clean.columns:
-            df_clean[col] = df_clean[col].astype(str).replace('nan', '').replace('None', '').replace('NaT', '')
-        
-        # Write headers
-        headers = df_clean.columns.tolist()
-        
-        # Write data
-        values = [headers] + df_clean.values.tolist()
-        worksheet.update(values, 'A1')
-
-        # Persist metadata (time blocks) to Meta sheet
-        try:
-            meta_ws = _get_or_create_gsheets_meta_worksheet(worksheet)
-            if meta_ws is not None:
-                meta = _apply_time_blocks_to_meta(_get_meta_from_df(df))
-                meta_ws.clear()
-                meta_ws.update([["key", "value"]] + [[k, json.dumps(v) if isinstance(v, (dict, list)) else str(v)] for k, v in meta.items()], "A1")
-                load_meta_from_gsheets.clear()
-        except Exception:
-            # Non-fatal: schedule should still save
-            pass
-        
-        # Clear the cache so next load gets fresh data
-        load_data_from_gsheets.clear()
-        return True
-    except Exception as e:
-        st.error(f"Error saving to Google Sheets: {e}")
-        return False
-
 def _data_editor_has_pending_edits(editor_key: str) -> bool:
     """Detect pending edits without touching widget state.
 
@@ -6883,13 +6399,6 @@ def _fetch_remote_save_version() -> int | None:
             payload = data[0].get("payload") if isinstance(data, list) else None
             meta = payload.get("meta") if isinstance(payload, dict) else None
             return _get_meta_save_version(meta)
-        if USE_GOOGLE_SHEETS and gsheet_worksheet is not None:
-            try:
-                load_meta_from_gsheets.clear()
-            except Exception:
-                pass
-            meta = load_meta_from_gsheets(gsheet_worksheet)
-            return _get_meta_save_version(meta)
     except Exception:
         return None
     return None
@@ -6932,7 +6441,7 @@ def _row_has_changes(edited_row, base_row, compare_cols: list[str]) -> bool:
 # PERFORMANCE: Use session-based caching to reduce API calls across reruns
 def _get_cached_data():
     """Get data with session-level caching for maximum performance."""
-    global USE_SUPABASE, USE_GOOGLE_SHEETS  # Need to modify these globals
+    global USE_SUPABASE  # Need to modify this global
 
     # Check if we have valid cached data in session
     if "cached_df_raw" in st.session_state and "cached_df_timestamp" in st.session_state:
@@ -6956,13 +6465,6 @@ def _get_cached_data():
         else:
             st.warning("⚠️ Supabase not configured. Falling back to local Excel file.")
             USE_SUPABASE = False  # Disable for this session
-
-    if not USE_SUPABASE and USE_GOOGLE_SHEETS:
-        # Load from Google Sheets
-        df_raw = load_data_from_gsheets(gsheet_worksheet)
-        if df_raw is None:
-            st.warning("⚠️ Failed to load from Google Sheets. Falling back to local Excel file.")
-            USE_GOOGLE_SHEETS = False
 
     # Fallback to local Excel if cloud storage failed or not configured
     if df_raw is None:
@@ -7222,7 +6724,7 @@ df["Is_Ongoing"] = (df["In_min"] <= current_min) & (current_min <= df["Out_min"]
 
 # ================ Unified Save Function ================
 def save_data(dataframe, show_toast=True, message="Data saved!", *, ignore_conflict=False):
-    """Save dataframe to Google Sheets or Excel based on configuration."""
+    """Save dataframe to Supabase or Excel based on configuration."""
     if st.session_state.get("is_saving"):
         return False
     st.session_state.is_saving = True
@@ -7241,7 +6743,7 @@ def save_data(dataframe, show_toast=True, message="Data saved!", *, ignore_confl
         if (
             st.session_state.get("enable_conflict_checks", True)
             and not ignore_conflict
-            and (USE_SUPABASE or USE_GOOGLE_SHEETS)
+            and USE_SUPABASE
         ):
             remote_version = _fetch_remote_save_version()
             if remote_version is not None and loaded_version is not None:
@@ -7279,10 +6781,6 @@ def save_data(dataframe, show_toast=True, message="Data saved!", *, ignore_confl
                     dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
                 if show_toast:
                     st.toast(f"{message} (local)", icon="💾")
-        elif USE_GOOGLE_SHEETS:
-            success = save_data_to_gsheets(gsheet_worksheet, dataframe)
-            if success and show_toast:
-                st.toast(message, icon="✅")
         else:
             with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
                 dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
@@ -7470,10 +6968,6 @@ with st.sidebar:
                 st.session_state.save_conflict = None
                 try:
                     load_data_from_supabase.clear()
-                except Exception:
-                    pass
-                try:
-                    load_data_from_gsheets.clear()
                 except Exception:
                     pass
                 st.rerun()
@@ -10033,7 +9527,6 @@ if category == "Admin/Settings":
             st.warning("Configure Supabase (url/key) to manage duties.")
     else:
         st.write(f"Using Supabase: {USE_SUPABASE}")
-        st.write(f"Using Google Sheets: {USE_GOOGLE_SHEETS}")
         st.write(f"Excel path: {file_path}")
 
 
