@@ -27,34 +27,21 @@ Streamlit Cloud is the easiest and fastest way to deploy your app with zero infr
 
 3. **Configure Secrets (Optional but Recommended)**
    
-   **For Supabase (Recommended):**
+   **For Supabase:**
    - Click "Advanced settings" → "Secrets"
    - Add your Supabase configuration:
    ```toml
-   [supabase]
-   url = "https://your-project.supabase.co"
-   key = "your-anon-key"
-   table = "allotment_data"
-   row_id = "main"
+   supabase_url = "https://your-project.supabase.co"
+   supabase_service_role_key = "your-service-role-key"
    ```
 
-   **Or for Google Sheets:**
+   Or use the table format:
    ```toml
-   [gsheets]
-   spreadsheet_id = "your-spreadsheet-id"
-   worksheet_name = "Sheet1"
-   
-   [gcp_service_account]
-   type = "service_account"
-   project_id = "your-project-id"
-   private_key_id = "your-key-id"
-   private_key = "-----BEGIN PRIVATE KEY-----\nYour-Key\n-----END PRIVATE KEY-----\n"
-   client_email = "your-service-account@project.iam.gserviceaccount.com"
-   client_id = "your-client-id"
-   auth_uri = "https://accounts.google.com/o/oauth2/auth"
-   token_uri = "https://oauth2.googleapis.com/token"
-   auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
-   client_x509_cert_url = "your-cert-url"
+   [supabase]
+   url = "https://your-project.supabase.co"
+   service_role_key = "your-service-role-key"
+   table = "tdb_allotment_state"
+   row_id = "main"
    ```
 
 4. **Deploy!**
@@ -108,14 +95,6 @@ VALUES ('main', '{"data": [], "meta": {}}'::jsonb);
 
 4. **Add to Streamlit Secrets** (see above)
 
-### **Google Sheets (Alternative)**
-
-1. Create Google Sheet with "Sheet1"
-2. Enable Google Sheets API
-3. Create Service Account
-4. Share sheet with service account email
-5. Add credentials to Streamlit secrets
-
 ### **Local Excel (Development Only)**
 
 - Place `Putt Allotment.xlsx` in same directory
@@ -126,9 +105,8 @@ VALUES ('main', '{"data": [], "meta": {}}'::jsonb);
 ## 🔧 Environment Variables
 
 The app automatically detects storage method:
-1. Checks for Supabase secrets first (recommended)
-2. Falls back to Google Sheets if configured
-3. Uses local Excel as last resort
+1. Checks for Supabase secrets (recommended for cloud)
+2. Uses local Excel as fallback for development
 
 ---
 
@@ -153,12 +131,13 @@ The app automatically detects storage method:
 - Ensure all dependencies in requirements.txt
 
 ### **Data Not Saving**
-- Verify Supabase/Google Sheets credentials
+- Verify Supabase credentials are correct
 - Check table exists and has correct structure
+- Ensure service role key (not anon key) is being used
 - Check app logs for error messages
 
 ### **Slow Performance**
-- Supabase is faster than Google Sheets
+- Supabase provides fast cloud storage
 - Consider upgrading Streamlit Cloud tier for more resources
 - Optimize data with fewer rows if needed
 
