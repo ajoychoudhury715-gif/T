@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(STREAMLIT_BROWSER_GATHER_USAGE_STATS=false python3 -m streamlit:*)"
     ]
   }
 }
