@@ -62,36 +62,51 @@ IST = timezone(timedelta(hours=5, minutes=30))
 file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Putt Allotment.xlsx")
 
 # Color schemes
+# Medical Blue & White Theme with Glassmorphism
 LIGHT_COLORS = {
-    "bg_primary": "#f3f3f4",
-    "bg_secondary": "#f3f3f4",
-    "text_primary": "#14110f",
-    "text_secondary": "#7e7f83",
-    "button_bg": "#34312d",
-    "button_text": "#f3f3f4",
-    "accent": "#d9c5b2",
-    "success": "#34312d",
-    "warning": "#d9c5b2",
-    "danger": "#7e7f83",
-    "info": "#34312d",
-    "glass_bg": "#f3f3f4",
-    "glass_border": "#d9c5b2",
+    "bg_primary": "#f8fafc",        # Soft blue-tinted white
+    "bg_secondary": "#f1f5f9",      # Light blue-gray
+    "bg_card": "rgba(255, 255, 255, 0.7)",  # Translucent white for glass effect
+    "text_primary": "#1e293b",      # Dark slate for text
+    "text_secondary": "#64748b",    # Medium slate gray
+    "button_bg": "#2563eb",         # Medical blue (primary actions)
+    "button_text": "#ffffff",       # White text on buttons
+    "accent": "#3b82f6",            # Lighter blue
+    "accent_primary": "#2563eb",    # Medical blue (primary actions)
+    "accent_secondary": "#3b82f6",  # Lighter blue
+    "accent_gradient_start": "#3b82f6",
+    "accent_gradient_end": "#2563eb",
+    "success": "#10b981",           # Green
+    "warning": "#f59e0b",           # Amber
+    "danger": "#ef4444",            # Red
+    "info": "#0ea5e9",              # Sky blue
+    "glass_bg": "rgba(255, 255, 255, 0.25)",  # Glass background
+    "glass_border": "rgba(255, 255, 255, 0.18)", # Glass border
+    "glass_shadow": "0 8px 32px 0 rgba(37, 99, 235, 0.15)", # Blue-tinted shadow
+    "backdrop_blur": "blur(16px)",  # Blur strength
 }
 
 DARK_COLORS = {
-    "bg_primary": "#14110f",
-    "bg_secondary": "#34312d",
-    "text_primary": "#f3f3f4",
-    "text_secondary": "#7e7f83",
-    "button_bg": "#34312d",
-    "button_text": "#f3f3f4",
-    "accent": "#d9c5b2",
-    "success": "#34312d",
-    "warning": "#d9c5b2",
-    "danger": "#7e7f83",
-    "info": "#34312d",
-    "glass_bg": "#34312d",
-    "glass_border": "#7e7f83",
+    "bg_primary": "#0f172a",        # Dark slate
+    "bg_secondary": "#1e293b",      # Lighter dark slate
+    "bg_card": "rgba(30, 41, 59, 0.7)",
+    "text_primary": "#f1f5f9",
+    "text_secondary": "#94a3b8",
+    "button_bg": "#3b82f6",
+    "button_text": "#ffffff",
+    "accent": "#60a5fa",
+    "accent_primary": "#3b82f6",
+    "accent_secondary": "#60a5fa",
+    "accent_gradient_start": "#60a5fa",
+    "accent_gradient_end": "#3b82f6",
+    "success": "#34d399",
+    "warning": "#fbbf24",
+    "danger": "#f87171",
+    "info": "#38bdf8",
+    "glass_bg": "rgba(30, 41, 59, 0.4)",
+    "glass_border": "rgba(148, 163, 184, 0.18)",
+    "glass_shadow": "0 8px 32px 0 rgba(59, 130, 246, 0.2)",
+    "backdrop_blur": "blur(16px)",
 }
 
 COLORS = LIGHT_COLORS
@@ -225,34 +240,85 @@ def _get_profiles_cache_snapshot() -> dict[str, Any]:
 def inject_white_pastel_sidebar():
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    /* Glassmorphism Sidebar */
     [data-testid="stSidebar"] {
-        background: #f3f3f4;
-        border-right: 1px solid #d9c5b2;
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.95) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(37, 99, 235, 0.1);
+        box-shadow: 4px 0 24px rgba(37, 99, 235, 0.08);
     }
-    [data-testid="stSidebarContent"] { padding: 16px 14px; }
+    [data-testid="stSidebarContent"] { padding: 20px 16px; }
+
     [data-testid="stSidebar"] .stSelectbox, [data-testid="stSidebar"] .stRadio {
-        background: #f3f3f4;
-        border: 1px solid #d9c5b2;
-        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(37, 99, 235, 0.2);
+        border-radius: 12px;
         padding: 10px 12px 8px 12px;
-        box-shadow: 0 8px 24px rgba(20, 17, 15, 0.15);
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
+        transition: all 0.3s ease;
     }
+
     [data-testid="stSidebar"] button {
-        border-radius: 14px !important;
-        padding: 0.6rem 0.9rem !important;
-        border: 1px solid #34312d !important;
-        background: #34312d !important;
-        box-shadow: 0 10px 22px rgba(20, 17, 15, 0.18) !important;
-        font-weight: 700;
+        border-radius: 12px !important;
+        padding: 0.7rem 1rem !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3) !important;
+        backdrop-filter: blur(10px) !important;
+        font-weight: 600;
+        color: white !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .sidebar-title { font-size: 18px; font-weight: 800; color: #14110f; margin-bottom: 6px; }
+
+    [data-testid="stSidebar"] button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(37, 99, 235, 0.4) !important;
+        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;
+    }
+
+    .sidebar-title {
+        font-size: 24px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 20px;
+        font-family: 'Inter', sans-serif;
+    }
+
     .live-pill {
-        display:inline-flex; align-items:center; gap:6px;
-        padding:6px 12px; border-radius:999px; font-size:12px; font-weight:700;
-        background:#d9c5b2; color:#14110f; border:1px solid #7e7f83; margin-bottom: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        backdrop-filter: blur(10px);
+        color: #059669;
+        margin-bottom: 12px;
     }
-    .live-dot { width:8px; height:8px; border-radius:999px; background:#34312d; }
+
+    .live-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981, #059669);
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -1264,15 +1330,15 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
         """
         <style>
         body, .stApp {
-            background: #f3f3f4 !important;
+            background: #f8fafc !important;
         }
         .block-container {padding-top:0.3rem !important;}
         h1,h2,h3{margin:0.3rem 0 !important;}
-        .dash-title {text-align:center; color:#14110f; font-size:28px; font-weight:800; letter-spacing:0.5px;}
-        .dash-subtitle {text-align:center; margin-top:-10px; color:#7e7f83; font-weight:700;}
+        .dash-title {text-align:center; color:#1e293b; font-size:28px; font-weight:800; letter-spacing:0.5px;}
+        .dash-subtitle {text-align:center; margin-top:-10px; color:#64748b; font-weight:700;}
         div[data-testid="stVerticalBlockBorderWrapper"] {
-            background: #f3f3f4;
-            border: 1px solid #d9c5b2;
+            background: #f8fafc;
+            border: 1px solid #3b82f6;
             border-radius: 20px;
             box-shadow: 0 18px 36px rgba(20, 17, 15, 0.18);
         }
@@ -1280,32 +1346,33 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
             padding: 16px 18px 18px 18px;
             border-radius: 20px;
         }
-        .v-divider {width: 1px; background: #d9c5b2; min-height: 280px; margin: 8px auto;}
+        .v-divider {width: 1px; background: #3b82f6; min-height: 280px; margin: 8px auto;}
         .panel-title {font-size: 20px; font-weight: 800; margin-bottom: 8px; display:flex; align-items:center; gap:8px;}
         .panel-title .link {font-size: 14px; opacity: 0.6; margin-left: 4px;}
-        .alert-card {background: #d9c5b2; border: 1px solid #7e7f83; border-radius: 12px; padding: 12px; color: #14110f; margin-bottom: 8px; display:flex; gap:10px; align-items:center;}
-        .alert-icon {width: 28px; height: 28px; border-radius: 50%; border: 2px solid #34312d; display:flex; align-items:center; justify-content:center; color:#34312d; font-weight:700;}
+        .alert-card {background: #3b82f6; border: 1px solid #64748b; border-radius: 12px; padding: 12px; color: #1e293b; margin-bottom: 8px; display:flex; gap:10px; align-items:center;}
+        .alert-icon {width: 28px; height: 28px; border-radius: 50%; border: 2px solid #2563eb; display:flex; align-items:center; justify-content:center; color:#2563eb; font-weight:700;}
         .alert-title {font-weight:700; margin-bottom:2px;}
         .alert-sub {opacity:0.85;}
-        .manage-pill {background: #f3f3f4; border: 1px solid #d9c5b2; border-radius: 12px; padding: 10px 12px; display:inline-flex; align-items:center; gap:8px; margin-top:6px; color:#14110f;}
-        .metric-card {background:#f3f3f4; border:1px solid #d9c5b2; border-radius:12px; padding:12px; text-align:center; min-height:80px;}
-        .metric-title {font-size: 12px; color:#7e7f83; letter-spacing:0.6px;}
-        .metric-value {font-size: 22px; font-weight: 800; color:#14110f;}
+        .manage-pill {background: #f8fafc; border: 1px solid #3b82f6; border-radius: 12px; padding: 10px 12px; display:inline-flex; align-items:center; gap:8px; margin-top:6px; color:#1e293b;}
+        .metric-card {background:#f8fafc; border:1px solid #3b82f6; border-radius:12px; padding:12px; text-align:center; min-height:80px;}
+        .metric-title {font-size: 12px; color:#64748b; letter-spacing:0.6px;}
+        .metric-value {font-size: 22px; font-weight: 800; color:#1e293b;}
         .metrics-grid {display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:10px; margin-bottom:6px;}
         #metrics-anchor + div[data-testid="stHorizontalBlock"] {margin-top: 0 !important;}
         .controls-row .stButton>button {height: 34px !important; border-radius: 10px !important;}
         .controls-row [data-baseweb="select"] > div {min-height: 42px !important; border-radius: 12px !important;}
-        button[kind="primary"] {background:#34312d !important; border:1px solid #34312d !important; color:#f3f3f4 !important; box-shadow:0 8px 18px rgba(20,17,15,0.25) !important;}
-        button[kind="secondary"] {background:#f3f3f4 !important; border:1px solid #7e7f83 !important; color:#14110f !important;}
-        .section-divider {height:1px; background: #d9c5b2; margin: 14px 0;}
-        .search-row input {background:#f3f3f4 !important; border-radius:10px !important; border:1px solid #d9c5b2 !important;}
-        [data-testid="stDataFrameContainer"] {border-radius: 14px !important; border: 1px solid #d9c5b2 !important; box-shadow: 0 8px 20px rgba(20,17,15,0.08) !important;}
-        [data-testid="stDataFrameContainer"] thead th {background:#f3f3f4 !important; color:#34312d !important; font-weight:700 !important;}
-        .summary-bar {background: #f3f3f4; border: 1px solid #d9c5b2; border-radius: 14px; padding: 6px 10px; margin-top: 12px;}
+        button[kind="primary"] {background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important; border:1px solid rgba(255, 255, 255, 0.3) !important; color:#ffffff !important; box-shadow:0 4px 20px rgba(37, 99, 235, 0.3) !important; backdrop-filter:blur(10px) !important; transition:all 0.3s ease !important;}
+        button[kind="primary"]:hover {transform:translateY(-2px) !important; box-shadow:0 8px 30px rgba(37, 99, 235, 0.4) !important; background:linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;}
+        button[kind="secondary"] {background:linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.3)) !important; border:1px solid rgba(37, 99, 235, 0.3) !important; color:#2563eb !important; backdrop-filter:blur(10px) !important; box-shadow:0 4px 16px rgba(37, 99, 235, 0.1) !important;}
+        .section-divider {height:1px; background: #3b82f6; margin: 14px 0;}
+        .search-row input {background:#f8fafc !important; border-radius:10px !important; border:1px solid #3b82f6 !important;}
+        [data-testid="stDataFrameContainer"] {border-radius: 14px !important; border: 1px solid #3b82f6 !important; box-shadow: 0 8px 20px rgba(20,17,15,0.08) !important;}
+        [data-testid="stDataFrameContainer"] thead th {background:#f8fafc !important; color:#2563eb !important; font-weight:700 !important;}
+        .summary-bar {background: #f8fafc; border: 1px solid #3b82f6; border-radius: 14px; padding: 6px 10px; margin-top: 12px;}
         .compact-dashboard [data-testid="stVerticalBlock"] {gap: 0.5rem;}
         .compact-dashboard [data-testid="stHorizontalBlock"] {gap: 0.6rem;}
         .schedule-cards {display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top: 6px;}
-        .schedule-card {background:#f3f3f4; border:1px solid #d9c5b2; border-radius:14px; padding:10px; box-shadow:0 6px 14px rgba(20,17,15,0.06); display:flex; flex-direction:column; gap:8px; min-height:180px;}
+        .schedule-card {background:#f8fafc; border:1px solid #3b82f6; border-radius:14px; padding:10px; box-shadow:0 6px 14px rgba(20,17,15,0.06); display:flex; flex-direction:column; gap:8px; min-height:180px;}
         .card-shell-marker {display:none;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) {background:linear-gradient(180deg, #fefefe 0%, #edf0f5 100%); border:1px solid #e6ecf3; border-radius:20px; box-shadow:0 20px 40px rgba(18, 22, 32, 0.22); overflow:hidden;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) > div {padding:0; display:flex; flex-direction:column; gap:10px; min-height:200px;}
@@ -2243,9 +2310,9 @@ st.markdown(
     }}
     
     body, .stApp {{
-        background: var(--bg-primary) !important;
+        background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%) !important;
         color: var(--text-primary) !important;
-        font-family: 'Sora', sans-serif;
+        font-family: 'Inter', sans-serif;
     }}
 
     /* Tighten gap below sticky header */
@@ -2263,13 +2330,14 @@ st.markdown(
         border-radius: 14px;
     }}
 
-    /* Cards & tables */
+    /* Glass Cards & Tables */
     .stDataFrame, .stTable, [data-testid="stDataFrameResizable"], [data-testid="stTable"] {{
-        background: var(--glass-bg) !important;
-        border: 1px solid var(--glass-border) !important;
-        box-shadow: 0 12px 28px rgba(20, 17, 15, 0.18);
-        border-radius: 16px;
-        backdrop-filter: none !important;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.3)) !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        box-shadow: 0 8px 32px 0 rgba(37, 99, 235, 0.12);
+        border-radius: 20px;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
     }}
     .stDataFrame table, .stTable table {{
         background: var(--glass-bg) !important;
@@ -2598,7 +2666,7 @@ st.markdown(
     .main [data-baseweb="select"] button {{
         color: {COLORS['text_primary']} !important;
         background-color: {COLORS['bg_secondary']} !important;
-        border: 1px solid #d9c5b2 !important;
+        border: 1px solid #3b82f6 !important;
         border-radius: 6px !important;
         transition: all 0.2s ease !important;
     }}
@@ -2849,7 +2917,7 @@ st.markdown(
         height: 20px !important;
         cursor: pointer !important;
         transition: transform 140ms ease, filter 0.3s ease !important;
-        accent-color: #34312d !important;
+        accent-color: #2563eb !important;
     }}
 
     /* Keyboard focus for table checkboxes */
@@ -2937,7 +3005,7 @@ st.markdown(
     /* Divider styling */
     hr {{
         border: none !important;
-        border-top: 2px solid #d9c5b2 !important;
+        border-top: 2px solid #3b82f6 !important;
         margin: 2rem 0 !important;
     }}
     
@@ -2946,7 +3014,7 @@ st.markdown(
         background-color: {COLORS['bg_secondary']} !important;
         border-radius: 8px !important;
         padding: 1.5rem !important;
-        border: 1px solid #d9c5b2 !important;
+        border: 1px solid #3b82f6 !important;
         margin-bottom: 1.5rem !important;
         box-shadow: 0 2px 8px rgba(20, 17, 15, 0.08) !important;
     }}
@@ -3161,9 +3229,9 @@ if os.path.exists(_logo_path):
 header_css = f"""
 <style>
 header[data-testid="stHeader"] {{
-    background: #f3f3f4 !important;
+    background: #f8fafc !important;
     min-height: 72px;
-    border-bottom: 1px solid #d9c5b2;
+    border-bottom: 1px solid #3b82f6;
     box-shadow: 0 12px 32px rgba(20, 17, 15, 0.18);
     position: sticky;
     top: 0;
@@ -3186,7 +3254,7 @@ header[data-testid="stHeader"]::after {{
     font-weight: 800;
     line-height: 1.3;
     letter-spacing: 0.4px;
-    color: #14110f;
+    color: #1e293b;
     text-shadow: 0 3px 10px rgba(52, 49, 45, 0.2);
     pointer-events: none;
 }}
@@ -7929,7 +7997,7 @@ if category == "Scheduling":
         """
         <style>
         .full-schedule-cards {margin-top: 8px;}
-        .schedule-card {background:#f3f3f4; border:1px solid #d9c5b2; border-radius:18px; padding:14px; box-shadow:0 10px 20px rgba(20,17,15,0.08); display:flex; flex-direction:column; gap:10px; min-height:220px;}
+        .schedule-card {background:#f8fafc; border:1px solid #3b82f6; border-radius:18px; padding:14px; box-shadow:0 10px 20px rgba(20,17,15,0.08); display:flex; flex-direction:column; gap:10px; min-height:220px;}
         .card-shell-marker {display:none;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) {background:linear-gradient(180deg, #ffffff 0%, #f2f4f7 100%); border:1px solid #e3e6ec; border-radius:24px; box-shadow:0 22px 44px rgba(24, 28, 36, 0.18); overflow:hidden;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) > div {padding:0 20px 18px 20px; display:flex; flex-direction:column; gap:12px; min-height:260px;}
@@ -9202,26 +9270,26 @@ if category == "Assistants" and assist_view == "Availability":
     
         st.markdown(f"""
         <div style='display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.2rem;'>
-            <div style='background: var(--glass-bg, #f3f3f4); border: 1.5px solid var(--glass-border, #d9c5b2); border-radius: 1.2rem; padding: 1.2rem 2.2rem; box-shadow: 0 2px 8px rgba(20, 17, 15, 0.04); min-width: 220px;'>
-                <div style='font-size: 2.2rem; font-weight: 700; color: var(--text-primary, #14110f); margin-bottom: 0.2rem;'>Overview</div>
-                <div style='font-size: 1.1rem; color: var(--text-secondary, #7e7f83);'>Current Assistant Status</div>
+            <div style='background: var(--glass-bg, #f8fafc); border: 1.5px solid var(--glass-border, #3b82f6); border-radius: 1.2rem; padding: 1.2rem 2.2rem; box-shadow: 0 2px 8px rgba(20, 17, 15, 0.04); min-width: 220px;'>
+                <div style='font-size: 2.2rem; font-weight: 700; color: var(--text-primary, #1e293b); margin-bottom: 0.2rem;'>Overview</div>
+                <div style='font-size: 1.1rem; color: var(--text-secondary, #64748b);'>Current Assistant Status</div>
             </div>
             <div style='display: flex; gap: 1.2rem;'>
                 <div style='background: rgba(52, 49, 45, 0.15); border-radius: 0.8rem; padding: 0.8rem 1.4rem; text-align: center;'>
-                    <div style='font-size: 1.6rem; font-weight: 600; color: #34312d;'>{free_count}</div>
-                    <div style='font-size: 1rem; color: #34312d;'>🟢 Free</div>
+                    <div style='font-size: 1.6rem; font-weight: 600; color: #2563eb;'>{free_count}</div>
+                    <div style='font-size: 1rem; color: #2563eb;'>🟢 Free</div>
                 </div>
                 <div style='background: rgba(126, 127, 131, 0.18); border-radius: 0.8rem; padding: 0.8rem 1.4rem; text-align: center;'>
-                    <div style='font-size: 1.6rem; font-weight: 600; color: #7e7f83;'>{busy_count}</div>
-                    <div style='font-size: 1rem; color: #7e7f83;'>🔴 Busy</div>
+                    <div style='font-size: 1.6rem; font-weight: 600; color: #64748b;'>{busy_count}</div>
+                    <div style='font-size: 1rem; color: #64748b;'>🔴 Busy</div>
                 </div>
                 <div style='background: rgba(20, 17, 15, 0.12); border-radius: 0.8rem; padding: 0.8rem 1.4rem; text-align: center;'>
-                    <div style='font-size: 1.6rem; font-weight: 600; color: #14110f;'>{blocked_count}</div>
-                    <div style='font-size: 1rem; color: #14110f;'>🚫 Blocked</div>
+                    <div style='font-size: 1.6rem; font-weight: 600; color: #1e293b;'>{blocked_count}</div>
+                    <div style='font-size: 1rem; color: #1e293b;'>🚫 Blocked</div>
                 </div>
                 <div style='background: rgba(217, 197, 178, 0.35); border-radius: 0.8rem; padding: 0.8rem 1.4rem; text-align: center;'>
-                    <div style='font-size: 1.6rem; font-weight: 600; color: #34312d;'>{total_count}</div>
-                    <div style='font-size: 1rem; color: #34312d;'>Total</div>
+                    <div style='font-size: 1.6rem; font-weight: 600; color: #2563eb;'>{total_count}</div>
+                    <div style='font-size: 1rem; color: #2563eb;'>Total</div>
                 </div>
             </div>
         </div>
