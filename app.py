@@ -1354,9 +1354,67 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
         .alert-title {font-weight:700; margin-bottom:2px;}
         .alert-sub {opacity:0.85;}
         .manage-pill {background: #f8fafc; border: 1px solid #3b82f6; border-radius: 12px; padding: 10px 12px; display:inline-flex; align-items:center; gap:8px; margin-top:6px; color:#1e293b;}
-        .metric-card {background:#f8fafc; border:1px solid #3b82f6; border-radius:12px; padding:12px; text-align:center; min-height:80px;}
-        .metric-title {font-size: 12px; color:#64748b; letter-spacing:0.6px;}
-        .metric-value {font-size: 22px; font-weight: 800; color:#1e293b;}
+        .metric-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4));
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            min-height: 100px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.08);
+        }
+        .metric-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 32px rgba(37, 99, 235, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        .metric-value {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+        .metric-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+            color: #2563eb;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) {
+            animation: cardEntrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker):nth-child(1) { animation-delay: 0.1s; }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker):nth-child(2) { animation-delay: 0.2s; }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker):nth-child(3) { animation-delay: 0.3s; }
+        @keyframes cardEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
         .metrics-grid {display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:10px; margin-bottom:6px;}
         #metrics-anchor + div[data-testid="stHorizontalBlock"] {margin-top: 0 !important;}
         .controls-row .stButton>button {height: 34px !important; border-radius: 10px !important;}
@@ -1374,7 +1432,31 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
         .schedule-cards {display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top: 6px;}
         .schedule-card {background:#f8fafc; border:1px solid #3b82f6; border-radius:14px; padding:10px; box-shadow:0 6px 14px rgba(20,17,15,0.06); display:flex; flex-direction:column; gap:8px; min-height:180px;}
         .card-shell-marker {display:none;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) {background:linear-gradient(180deg, #fefefe 0%, #edf0f5 100%); border:1px solid #e6ecf3; border-radius:20px; box-shadow:0 20px 40px rgba(18, 22, 32, 0.22); overflow:hidden;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) {
+            position: relative;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.08), 0 1px 2px rgba(0, 0, 0, 0.02), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker)::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker):hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 20px 60px rgba(37, 99, 235, 0.15), 0 4px 8px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 1);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) > div {padding:0; display:flex; flex-direction:column; gap:10px; min-height:200px;}
         .card-inner {background:#fff; border-radius:18px; border:1px solid #eceff5; box-shadow:0 12px 24px rgba(22, 24, 31, 0.14); padding:0 16px 12px; display:flex; flex-direction:column; gap:8px;}
         .card-inner .card-status-banner {margin-top:0;}
@@ -1432,33 +1514,214 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] > div,
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] > label > div {width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid #c3c8d0; background: #ffffff;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) .stCheckbox div[data-baseweb="checkbox"] input:checked + div {background:#2f63e8; border-color:#2f63e8;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="primary"] {background:#2f63e8 !important; border:1px solid #2f63e8 !important; color:#ffffff !important; box-shadow:0 10px 24px rgba(47,99,232,0.32) !important;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="secondary"] {background:#ffffff !important; border:1px solid #d5d8de !important; color:#4b4f56 !important; box-shadow:0 6px 14px rgba(24, 28, 36, 0.08) !important;}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="column"]:has(.card-action-cancel) button {border-color:#e1b0b0 !important; color:#b15454 !important; background:#ffffff !important;}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="primary"] {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="primary"]:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35) !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="secondary"] {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5)) !important;
+            border: 1px solid rgba(59, 130, 246, 0.3) !important;
+            color: #2563eb !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) button[kind="secondary"]:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25) !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="column"]:has(.card-action-cancel) button {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5)) !important;
+            border: 1px solid rgba(239, 68, 68, 0.3) !important;
+            color: #dc2626 !important;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) div[data-testid="column"]:has(.card-action-cancel) button:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25) !important;
+        }
         .card-action-marker {display:none;}
-        .card-status-banner {display:flex; align-items:center; gap:8px; padding:10px 0 12px 0; border-radius:16px 16px 14px 14px; font-weight:800; font-size:11px; letter-spacing:0.6px; text-transform:uppercase; margin:0 -16px 10px -16px; background:linear-gradient(90deg, #fff3d3, #fef5de);}
-        .card-status-banner.waiting {color:#8a775b;}
-        .card-status-banner.ongoing {background:linear-gradient(90deg, #dee5ff, #eff2ff); color:#2f4f86;}
-        .card-status-banner.arrived {background:linear-gradient(90deg, #edf0f1, #f5f7fa); color:#50545a;}
-        .card-status-banner.completed {background:linear-gradient(90deg, #def3e6, #eef8f1); color:#3d6b4a;}
-        .card-status-banner.cancelled {background:linear-gradient(90deg, #f4d5d6, #fde8e8); color:#9a4b4b;}
-        .status-dot {width:12px; height:12px; border-radius:50%;}
-        .card-status-banner.waiting .status-dot {background:#f1b400; box-shadow:0 0 0 3px rgba(241,180,0,0.24);}
-        .card-status-banner.ongoing .status-dot {background:#3b6fd8; box-shadow:0 0 0 3px rgba(59,111,216,0.24);}
-        .card-status-banner.arrived .status-dot {background:#7a7a7a; box-shadow:0 0 0 3px rgba(122,122,122,0.24);}
-        .card-status-banner.completed .status-dot {background:#4caf6b; box-shadow:0 0 0 3px rgba(76,175,107,0.24);}
-        .card-status-banner.cancelled .status-dot {background:#d45c5c; box-shadow:0 0 0 3px rgba(212,92,92,0.24);}
+        .card-status-banner {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin: 0 0 16px 0;
+            transition: all 0.3s ease;
+        }
+        .card-status-banner.waiting {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.15));
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #d97706;
+        }
+        .card-status-banner.ongoing {
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(59, 130, 246, 0.15));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #2563eb;
+        }
+        .card-status-banner.arrived {
+            background: linear-gradient(135deg, rgba(148, 163, 184, 0.2), rgba(100, 116, 139, 0.15));
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            color: #475569;
+        }
+        .card-status-banner.completed {
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(16, 185, 129, 0.15));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #059669;
+        }
+        .card-status-banner.cancelled {
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.2), rgba(239, 68, 68, 0.15));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #dc2626;
+        }
+        .status-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 12px currentColor, 0 0 24px currentColor;
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(0.95); }
+        }
         .card-head {display:flex; align-items:center; gap:12px;}
         .card-title {display:flex; flex-direction:column; gap:2px;}
-        .card-avatar {width:44px; height:44px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #f6e4c9, #e4cca4); border:1px solid #ead8be; color:#5d4a35; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);}
-        .card-name {font-size:15px; font-weight:800; color:#2a2d33; letter-spacing:0.3px; text-transform:uppercase;}
+        .card-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 22px;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25), 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 -2px 8px rgba(0, 0, 0, 0.15), inset 0 2px 8px rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+        }
+        .card-avatar::before {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 15%;
+            width: 40%;
+            height: 40%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.5), transparent);
+            border-radius: 50%;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker):hover .card-avatar {
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 0 12px 32px rgba(37, 99, 235, 0.35), 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 -2px 8px rgba(0, 0, 0, 0.2), inset 0 2px 12px rgba(255, 255, 255, 0.4);
+        }
+        .card-name {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
         .card-time {font-size:13px; color:#6f757d;}
-        .card-info {display:flex; flex-direction:column; gap:8px;}
-        .info-row {display:flex; align-items:center; gap:10px;}
-        .info-icon {width:30px; height:30px; border-radius:50%; background:#f3eee5; border:1px solid #e6dacb; color:#6f5c48; font-size:16px; font-weight:600; display:flex; align-items:center; justify-content:center; line-height:1;}
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.3));
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        .info-row:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5));
+            border-color: rgba(59, 130, 246, 0.2);
+            transform: translateX(4px);
+        }
+        .info-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2563eb;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker):hover .info-icon {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.08));
+            border-color: rgba(59, 130, 246, 0.25);
+            transform: scale(1.05);
+        }
         .info-icon.doctor-icon {font-size:16px;}
         .info-icon.staff-icon {font-size:16px;}
-        .info-text {font-size:15px; color:#2f333a; font-weight:600;}
+        .info-icon-svg {
+            display: block;
+            width: 20px;
+            height: 20px;
+        }
+        .info-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+            flex: 1;
+        }
+        .info-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
         .card-subdivider {height:1px; background:#e4e6eb; margin: 10px 0 6px;}
         .card-divider {height:1px; background:#e4e6eb; margin: 12px 0;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) [data-testid="stExpander"] {border:1px solid #d9dde3; border-radius:12px; background:#f7f8fa; margin-top:6px;}
@@ -2088,12 +2351,14 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
                         status_text = "WAITING"
                     status_class = _status_class(status_text)
                     staff_html = " &bull; ".join(html.escape(name) for name in staff) if staff else "Unassigned"
+                    doctor_icon_svg = '<svg class="info-icon-svg" viewBox="0 0 24 24" width="20" height="20"><path d="M19 8h-1.26c-.19-.73-.48-1.42-.85-2.06l.94-.94a.996.996 0 0 0 0-1.41l-1.41-1.41a.996.996 0 0 0-1.41 0l-.94.94c-.64-.37-1.33-.66-2.06-.85V1c0-.55-.45-1-1-1H9c-.55 0-1 .45-1 1v1.26c-.73.19-1.42.48-2.06.85l-.94-.94a.996.996 0 0 0-1.41 0L2.18 3.58a.996.996 0 0 0 0 1.41l.94.94c-.37.64-.66 1.33-.85 2.06H1c-.55 0-1 .45-1 1v2c0 .55.45 1 1 1h1.26c.19.73.48 1.42.85 2.06l-.94.94a.996.996 0 0 0 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0l.94-.94c.64.37 1.33.66 2.06.85V23c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-1.26c.73-.19 1.42-.48 2.06-.85l.94.94c.39.39 1.02.39 1.41 0l1.41-1.41a.996.996 0 0 0 0-1.41l-.94-.94c.37-.64.66-1.33.85-2.06H19c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1zm-8 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" fill="currentColor"/></svg>'
+                    staff_icon_svg = '<svg class="info-icon-svg" viewBox="0 0 24 24" width="20" height="20"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="currentColor"/></svg>'
                     doctor_line = (
-                        f"<div class='info-row'><span class='info-icon doctor-icon' aria-hidden='true'>👩‍⚕️</span><span class='info-text'>{html.escape(doctor)}</span></div>"
+                        f"<div class='info-row'><span class='info-icon doctor-icon'>{doctor_icon_svg}</span><span class='info-text'>{html.escape(doctor)}</span></div>"
                         if doctor
                         else ""
                     )
-                    staff_line = f"<div class='info-row'><span class='info-icon staff-icon' aria-hidden='true'>👥</span><span class='info-text'>{staff_html}</span></div>"
+                    staff_line = f"<div class='info-row'><span class='info-icon staff-icon'>{staff_icon_svg}</span><span class='info-text'>{staff_html}</span></div>"
                     row_key = row_id if row_id else f"compact_{row_index}"
 
                     with col:
@@ -8077,12 +8342,70 @@ if category == "Scheduling":
         .card-avatar {width:56px; height:56px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #f6e4c9, #e4cca4); border:1px solid #ead8be; color:#5d4a35; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);}
         .card-name {font-size:18px; font-weight:800; color:#2a2d33; letter-spacing:0.4px; text-transform:uppercase;}
         .card-time {font-size:13px; color:#6f757d;}
-        .card-info {display:flex; flex-direction:column; gap:8px;}
-        .info-row {display:flex; align-items:center; gap:10px;}
-        .info-icon {width:30px; height:30px; border-radius:50%; background:#f3eee5; border:1px solid #e6dacb; color:#6f5c48; font-size:16px; font-weight:600; display:flex; align-items:center; justify-content:center; line-height:1;}
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.3));
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        .info-row:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5));
+            border-color: rgba(59, 130, 246, 0.2);
+            transform: translateX(4px);
+        }
+        .info-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2563eb;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker):hover .info-icon {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.08));
+            border-color: rgba(59, 130, 246, 0.25);
+            transform: scale(1.05);
+        }
         .info-icon.doctor-icon {font-size:16px;}
         .info-icon.staff-icon {font-size:16px;}
-        .info-text {font-size:15px; color:#2f333a; font-weight:600;}
+        .info-icon-svg {
+            display: block;
+            width: 20px;
+            height: 20px;
+        }
+        .info-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+            flex: 1;
+        }
+        .info-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
         .card-subdivider {height:1px; background:#e4e6eb; margin: 10px 0 6px;}
         .card-divider {height:1px; background:#e4e6eb; margin: 12px 0;}
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-shell-marker) [data-testid="stExpander"] {border:1px solid #d9dde3; border-radius:12px; background:#f7f8fa; margin-top:6px;}
@@ -8633,12 +8956,14 @@ if category == "Scheduling":
                         status_text = "WAITING"
                     status_class = _status_class(status_text)
                     staff_html = " &bull; ".join(html.escape(name) for name in staff) if staff else "Unassigned"
+                    doctor_icon_svg = '<svg class="info-icon-svg" viewBox="0 0 24 24" width="20" height="20"><path d="M19 8h-1.26c-.19-.73-.48-1.42-.85-2.06l.94-.94a.996.996 0 0 0 0-1.41l-1.41-1.41a.996.996 0 0 0-1.41 0l-.94.94c-.64-.37-1.33-.66-2.06-.85V1c0-.55-.45-1-1-1H9c-.55 0-1 .45-1 1v1.26c-.73.19-1.42.48-2.06.85l-.94-.94a.996.996 0 0 0-1.41 0L2.18 3.58a.996.996 0 0 0 0 1.41l.94.94c-.37.64-.66 1.33-.85 2.06H1c-.55 0-1 .45-1 1v2c0 .55.45 1 1 1h1.26c.19.73.48 1.42.85 2.06l-.94.94a.996.996 0 0 0 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0l.94-.94c.64.37 1.33.66 2.06.85V23c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-1.26c.73-.19 1.42-.48 2.06-.85l.94.94c.39.39 1.02.39 1.41 0l1.41-1.41a.996.996 0 0 0 0-1.41l-.94-.94c.37-.64.66-1.33.85-2.06H19c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1zm-8 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" fill="currentColor"/></svg>'
+                    staff_icon_svg = '<svg class="info-icon-svg" viewBox="0 0 24 24" width="20" height="20"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="currentColor"/></svg>'
                     doctor_line = (
-                        f"<div class='info-row'><span class='info-icon doctor-icon' aria-hidden='true'>👩‍⚕️</span><span class='info-text'>{html.escape(doctor)}</span></div>"
+                        f"<div class='info-row'><span class='info-icon doctor-icon'>{doctor_icon_svg}</span><span class='info-text'>{html.escape(doctor)}</span></div>"
                         if doctor
                         else ""
                     )
-                    staff_line = f"<div class='info-row'><span class='info-icon staff-icon' aria-hidden='true'>👥</span><span class='info-text'>{staff_html}</span></div>"
+                    staff_line = f"<div class='info-row'><span class='info-icon staff-icon'>{staff_icon_svg}</span><span class='info-text'>{staff_html}</span></div>"
                     row_key = row_id if row_id else f"full_{start}_{row_index}"
 
                     with col:
