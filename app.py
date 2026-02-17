@@ -557,11 +557,41 @@ def load_excel_sheet(sheet_name: str, expected_columns: Optional[list] = None, e
         return pd.DataFrame(columns=expected_columns) if expected_columns else pd.DataFrame()
 
 def save_excel_sheet(df: pd.DataFrame, sheet_name: str, excel_path: Optional[str] = None):
-    """Save DataFrame to any Excel sheet (overwrites if exists)."""
+    """Save DataFrame to any Excel sheet (preserves all other sheets)."""
     path = excel_path or file_path
     try:
-        with pd.ExcelWriter(path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-            df.to_excel(writer, sheet_name=sheet_name, index=False)
+        # Load existing workbook to preserve all sheets
+        try:
+            wb = openpyxl.load_workbook(path)
+        except Exception:
+            # If file can't be loaded, create new workbook
+            wb = openpyxl.Workbook()
+            if wb.active:
+                wb.remove(wb.active)
+
+        # Remove sheet if it exists (to avoid duplicates)
+        if sheet_name in wb.sheetnames:
+            del wb[sheet_name]
+
+        # Create new sheet and write data using openpyxl directly
+        ws = wb.create_sheet(sheet_name)
+
+        # Write headers
+        for col_idx, col_name in enumerate(df.columns, 1):
+            ws.cell(row=1, column=col_idx, value=col_name)
+
+        # Write data rows
+        for row_idx, (_, row_data) in enumerate(df.iterrows(), 2):
+            for col_idx, value in enumerate(row_data, 1):
+                ws.cell(row=row_idx, column=col_idx, value=value)
+
+        # Ensure at least one sheet is visible
+        if not any(ws_check.sheet_state == 'visible' for ws_check in wb.worksheets):
+            if wb.sheetnames:
+                wb[wb.sheetnames[0]].sheet_state = 'visible'
+
+        wb.save(path)
+        wb.close()
     except Exception as e:
         print(f"Error saving {sheet_name}: {e}")
 
