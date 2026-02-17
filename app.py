@@ -500,8 +500,8 @@ def ensure_attendance_sheet_exists(excel_path: Optional[str] = None):
                 for col in ATTENDANCE_COLUMNS:
                     if col in current.columns:
                         aligned[col] = current[col]
-            with pd.ExcelWriter(path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-                aligned.to_excel(writer, sheet_name=ATTENDANCE_SHEET, index=False)
+            # Use safe sheet saving to preserve all other sheets
+            save_excel_sheet(aligned, ATTENDANCE_SHEET, str(path))
     except Exception:
         # Non-fatal alignment failure; callers will handle empty frame
         pass
@@ -531,8 +531,8 @@ def save_attendance_sheet(excel_path: Optional[str], att_df: pd.DataFrame):
             if col not in clean_df.columns:
                 clean_df[col] = ""
         clean_df = clean_df[ATTENDANCE_COLUMNS]
-        with pd.ExcelWriter(path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-            clean_df.to_excel(writer, sheet_name=ATTENDANCE_SHEET, index=False)
+        # Use safe sheet saving to preserve all other sheets
+        save_excel_sheet(clean_df, ATTENDANCE_SHEET, path)
         try:
             _load_attendance_today_excel.clear()
         except Exception:
