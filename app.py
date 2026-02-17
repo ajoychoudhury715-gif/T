@@ -8192,6 +8192,13 @@ if category == "Scheduling":
             # Save the updated dataframe
             _maybe_save(df_raw_with_new, show_toast=False, message="New patient row added!")
             st.success("New patient row added!")
+
+            # Clear cache so fresh data loads on rerun
+            if "cached_df_raw" in st.session_state:
+                del st.session_state.cached_df_raw
+            if "cached_df_timestamp" in st.session_state:
+                del st.session_state.cached_df_timestamp
+
             st.rerun()
 
     with col_save:
