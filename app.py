@@ -8189,8 +8189,8 @@ if category == "Scheduling":
             new_row_df = pd.DataFrame([new_row])
             df_raw_with_new = pd.concat([df_raw, new_row_df], ignore_index=True)
 
-            # Save the updated dataframe
-            _maybe_save(df_raw_with_new, show_toast=False, message="New patient row added!")
+            # FORCE save the updated dataframe immediately
+            _maybe_save(df_raw_with_new, show_toast=False, message="New patient row added!", force=True)
             st.success("New patient row added!")
 
             # Clear cache so fresh data loads on rerun
