@@ -1340,6 +1340,60 @@ def render_duty_reminder_widget(schedule_df: pd.DataFrame, supabase):
             _pick_ui(monthly_fit, "monthly")
 
 
+def render_assistant_overview_widget():
+    """Display all assistants and their current status (BUSY with timer or AVAILABLE)."""
+    st.markdown("### 👥 Assistant Overview")
+
+    # Load all assistants
+    try:
+        assistants_df = load_profiles("Assistants")
+        assistants = sorted(assistants_df["name"].dropna().astype(str).str.strip().unique().tolist()) if not assistants_df.empty else []
+    except Exception:
+        assistants = []
+
+    if not assistants:
+        st.caption("No assistants found in Assistants sheet.")
+        return
+
+    # Get all active duty runs
+    try:
+        duty_runs_df = load_duty_runs_sheet()
+        active_runs = duty_runs_df[duty_runs_df["status"].astype(str).str.upper() == "IN_PROGRESS"] if not duty_runs_df.empty else pd.DataFrame()
+    except Exception:
+        active_runs = pd.DataFrame()
+
+    # Build overview
+    overview_data = []
+    for assistant in assistants:
+        # Check if assistant has active duty
+        assistant_run = active_runs[active_runs["assistant"].astype(str).str.strip() == assistant] if not active_runs.empty else pd.DataFrame()
+
+        if not assistant_run.empty:
+            run = assistant_run.iloc[0]
+            due_dt = _parse_iso_ts(run.get("due_at"))
+            if due_dt:
+                delta = due_dt - now_ist()
+                if delta.total_seconds() > 0:
+                    mins = int(delta.total_seconds() // 60)
+                    secs = int(delta.total_seconds() % 60)
+                    status = f"🔴 BUSY • {mins:02d}:{secs:02d} remaining"
+                else:
+                    status = "🔴 BUSY • ⚠️ Time over!"
+            else:
+                status = "🔴 BUSY"
+        else:
+            status = "🟢 AVAILABLE"
+
+        overview_data.append({
+            "Assistant": assistant,
+            "Status": status,
+        })
+
+    # Display as table
+    overview_df = pd.DataFrame(overview_data)
+    st.dataframe(overview_df, use_container_width=True, hide_index=True)
+
+
 # ================ DUTY ADMIN (SUPABASE) ================
 def render_duties_master_admin(supabase):
     st.subheader("🗂 Duties Master (Weekly / Monthly)")
@@ -7878,6 +7932,12 @@ with st.sidebar:
         render_duty_reminder_widget(schedule_for_punch, None)
     except Exception as e:
         st.caption(f"Duty reminder unavailable: {e}")
+    st.divider()
+    try:
+        # Show assistant overview (busy/available status)
+        render_assistant_overview_widget()
+    except Exception as e:
+        st.caption(f"Assistant overview unavailable: {e}")
     st.divider()
 
 # ================ MAIN DASHBOARD NAVIGATION ================
