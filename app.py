@@ -2,7 +2,8 @@
 import streamlit as st  # pyright: ignore[reportUndefinedVariable]
 import pandas as pd # pyright: ignore[reportMissingModuleSource]
 from datetime import datetime, time as time_type, timezone, timedelta
-from typing import Any
+from typing import Any, Optional
+from pandas import DataFrame
 import os
 import time as time_module  # for retry delays
 import zipfile  # for BadZipFile exception handling
@@ -153,6 +154,12 @@ FORCE_SUPABASE = False  # Changed from True - disables cloud storage
 ATTENDANCE_SHEET = "Assistants_Attendance"
 ATTENDANCE_COLUMNS = ["DATE", "ASSISTANT", "PUNCH IN", "PUNCH OUT"]
 
+# Duties and Patients configuration (Excel sheets)
+DUTIES_MASTER_SHEET = "Duties_Master"
+DUTY_ASSIGNMENTS_SHEET = "Duty_Assignments"
+DUTY_RUNS_SHEET = "Duty_Runs"
+PATIENTS_SHEET = "Patients"
+
 # Supabase configuration
 supabase_client = None
 supabase_table_name = "tdb_allotment_state"
@@ -174,7 +181,7 @@ def ist_today_and_time():
     now = now_ist()
     return now.date().isoformat(), now.strftime("%H:%M:%S")
 
-def time_to_minutes(time_value: Any) -> int | None:
+def time_to_minutes(time_value: Any) -> Optional[int]:
     """Convert time values to minutes since midnight for comparison."""
     from datetime import time as time_type
 
@@ -215,7 +222,7 @@ def time_to_minutes(time_value: Any) -> int | None:
 
     return None
 
-def safe_str_to_time_obj(time_str: Any) -> time_type | None:
+def safe_str_to_time_obj(time_str: Any) -> Optional[time_type]:
     """Convert HH:MM string to time object. Returns None if invalid."""
     if not time_str or not isinstance(time_str, str):
         return None
@@ -329,7 +336,7 @@ inject_white_pastel_sidebar()
 ATTENDANCE_SHEET = "Assistants_Attendance"
 ATTENDANCE_COLUMNS = ["DATE", "ASSISTANT", "PUNCH IN", "PUNCH OUT"]
 
-def _attendance_excel_path(path_override: str | None = None) -> str:
+def _attendance_excel_path(path_override: Optional[str] = None) -> str:
     """Return a safe attendance Excel path (defaults to local workbook)."""
     if path_override:
         return path_override
@@ -440,7 +447,7 @@ def get_assistants_list(schedule_df):
 def extract_assistants(schedule_df):
     return get_assistants_list(schedule_df)
 
-def ensure_attendance_sheet_exists(excel_path: str | None = None):
+def ensure_attendance_sheet_exists(excel_path: Optional[str] = None):
     """Create/align the attendance sheet with expected columns."""
     path = Path(_attendance_excel_path(excel_path))
     try:
@@ -468,7 +475,7 @@ def ensure_attendance_sheet_exists(excel_path: str | None = None):
         # Non-fatal alignment failure; callers will handle empty frame
         pass
 
-def load_attendance_sheet(excel_path: str | None = None):
+def load_attendance_sheet(excel_path: Optional[str] = None):
     ensure_attendance_sheet_exists(excel_path)
     path = _attendance_excel_path(excel_path)
     try:
@@ -484,7 +491,7 @@ def load_attendance_sheet(excel_path: str | None = None):
         df[col] = df[col].astype(str).replace("nan", "").fillna("")
     return df[ATTENDANCE_COLUMNS]
 
-def save_attendance_sheet(excel_path: str | None, att_df: pd.DataFrame):
+def save_attendance_sheet(excel_path: Optional[str], att_df: pd.DataFrame):
     ensure_attendance_sheet_exists(excel_path)
     path = _attendance_excel_path(excel_path)
     try:
@@ -501,6 +508,246 @@ def save_attendance_sheet(excel_path: str | None, att_df: pd.DataFrame):
             pass
     except Exception as e:
         st.error(f"Attendance save failed: {e}")
+
+# ==================== GENERIC EXCEL SHEET HELPERS ====================
+def load_excel_sheet(sheet_name: str, expected_columns: Optional[list] = None, excel_path: Optional[str] = None) -> pd.DataFrame:
+    """Load any Excel sheet, return empty DataFrame with expected columns if sheet missing."""
+    path = excel_path or file_path
+    try:
+        df = pd.read_excel(path, sheet_name=sheet_name, engine="openpyxl")
+        if df.empty and expected_columns:
+            return pd.DataFrame(columns=expected_columns)
+        if expected_columns:
+            for col in expected_columns:
+                if col not in df.columns:
+                    df[col] = ""
+        return df
+    except Exception:
+        return pd.DataFrame(columns=expected_columns) if expected_columns else pd.DataFrame()
+
+def save_excel_sheet(df: pd.DataFrame, sheet_name: str, excel_path: Optional[str] = None):
+    """Save DataFrame to any Excel sheet (overwrites if exists)."""
+    path = excel_path or file_path
+    try:
+        with pd.ExcelWriter(path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+    except Exception as e:
+        print(f"Error saving {sheet_name}: {e}")
+
+# ==================== DUTIES MASTER SHEET FUNCTIONS ====================
+def load_duties_master_sheet(excel_path: Optional[str] = None) -> pd.DataFrame:
+    """Load duties master from Excel sheet."""
+    columns = ["id", "title", "frequency", "default_minutes", "op", "active", "created_at"]
+    return load_excel_sheet(DUTIES_MASTER_SHEET, columns, excel_path)
+
+def save_duties_master_sheet(df: pd.DataFrame, excel_path: Optional[str] = None):
+    """Save duties master to Excel sheet."""
+    save_excel_sheet(df, DUTIES_MASTER_SHEET, excel_path)
+
+# ==================== DUTY ASSIGNMENTS SHEET FUNCTIONS ====================
+def load_duty_assignments_sheet(excel_path: Optional[str] = None) -> pd.DataFrame:
+    """Load duty assignments from Excel sheet."""
+    columns = ["id", "duty_id", "assistant", "op", "est_minutes", "active"]
+    return load_excel_sheet(DUTY_ASSIGNMENTS_SHEET, columns, excel_path)
+
+def save_duty_assignments_sheet(df: pd.DataFrame, excel_path: Optional[str] = None):
+    """Save duty assignments to Excel sheet."""
+    save_excel_sheet(df, DUTY_ASSIGNMENTS_SHEET, excel_path)
+
+# ==================== DUTY RUNS SHEET FUNCTIONS ====================
+def load_duty_runs_sheet(excel_path: Optional[str] = None) -> pd.DataFrame:
+    """Load duty runs from Excel sheet."""
+    columns = ["id", "date", "assistant", "duty_id", "status", "started_at", "due_at", "ended_at", "est_minutes", "op"]
+    return load_excel_sheet(DUTY_RUNS_SHEET, columns, excel_path)
+
+def save_duty_runs_sheet(df: pd.DataFrame, excel_path: Optional[str] = None):
+    """Save duty runs to Excel sheet."""
+    save_excel_sheet(df, DUTY_RUNS_SHEET, excel_path)
+
+# ==================== PATIENTS SHEET FUNCTIONS ====================
+def load_patients_sheet(excel_path: Optional[str] = None) -> pd.DataFrame:
+    """Load patients from Excel sheet."""
+    columns = ["id", "name"]
+    return load_excel_sheet(PATIENTS_SHEET, columns, excel_path)
+
+def save_patients_sheet(df: pd.DataFrame, excel_path: Optional[str] = None):
+    """Save patients to Excel sheet."""
+    save_excel_sheet(df, PATIENTS_SHEET, excel_path)
+
+# ==================== EXCEL-BASED DUTY FUNCTIONS ====================
+def fetch_active_duty_assignments_excel(assistant: str) -> list[dict[str, Any]]:
+    """Fetch active duty assignments from Excel (replaces Supabase version)."""
+    if not assistant:
+        return []
+    try:
+        assignments_df = load_duty_assignments_sheet()
+        duties_df = load_duties_master_sheet()
+
+        if assignments_df.empty or duties_df.empty:
+            return []
+
+        # Filter assignments by assistant and active=True
+        matching = assignments_df[
+            (assignments_df["assistant"].astype(str).str.strip() == assistant) &
+            (assignments_df["active"].astype(str).str.lower() == "true")
+        ]
+
+        if matching.empty:
+            return []
+
+        # Create lookup of duties
+        duty_map = {}
+        for _, duty_row in duties_df.iterrows():
+            duty_id = str(duty_row.get("id", ""))
+            if duty_row.get("active") and duty_id:
+                duty_map[duty_id] = {
+                    "id": duty_id,
+                    "title": str(duty_row.get("title", "")),
+                    "frequency": str(duty_row.get("frequency", "")).upper(),
+                    "default_minutes": _safe_int(duty_row.get("default_minutes"), 15),
+                    "op": str(duty_row.get("op", "")),
+                }
+
+        # Combine assignments with duty details
+        result = []
+        for _, assign_row in matching.iterrows():
+            duty_id = str(assign_row.get("duty_id", ""))
+            duty = duty_map.get(duty_id)
+            if not duty:
+                continue
+
+            est = assign_row.get("est_minutes")
+            if est is None or (isinstance(est, float) and pd.isna(est)):
+                est = duty.get("default_minutes", 15)
+            else:
+                est = _safe_int(est, 15)
+
+            result.append({
+                "assignment_id": str(assign_row.get("id", "")),
+                "duty_id": duty_id,
+                "title": duty["title"],
+                "frequency": duty["frequency"],
+                "est_minutes": est,
+                "op": assign_row.get("op") or duty["op"],
+            })
+
+        return result
+    except Exception as e:
+        print(f"Error fetching duty assignments: {e}")
+        return []
+
+def fetch_duty_runs_since_excel(assistant: str, start_date_iso: str) -> list[dict[str, Any]]:
+    """Fetch duty runs since date from Excel (replaces Supabase version)."""
+    if not assistant or not start_date_iso:
+        return []
+    try:
+        runs_df = load_duty_runs_sheet()
+        if runs_df.empty:
+            return []
+
+        # Filter by assistant and date >= start_date
+        matching = runs_df[
+            (runs_df["assistant"].astype(str).str.strip() == assistant) &
+            (runs_df["date"].astype(str) >= start_date_iso)
+        ]
+
+        return matching.to_dict("records") if not matching.empty else []
+    except Exception as e:
+        print(f"Error fetching duty runs: {e}")
+        return []
+
+def fetch_active_duty_run_excel(assistant: str) -> Optional[dict[str, Any]]:
+    """Fetch active (IN_PROGRESS) duty run from Excel (replaces Supabase version)."""
+    if not assistant:
+        return None
+    try:
+        runs_df = load_duty_runs_sheet()
+        if runs_df.empty:
+            return None
+
+        # Filter by assistant and status=IN_PROGRESS, sorted by started_at descending
+        matching = runs_df[
+            (runs_df["assistant"].astype(str).str.strip() == assistant) &
+            (runs_df["status"].astype(str).str.upper() == "IN_PROGRESS")
+        ]
+
+        if matching.empty:
+            return None
+
+        # Sort by started_at descending and get first
+        matching_sorted = matching.sort_values("started_at", ascending=False)
+        return matching_sorted.iloc[0].to_dict()
+    except Exception:
+        return None
+
+def start_duty_run_excel(assistant: str, duty: dict[str, Any]) -> tuple[Optional[str], dict[str, Any]]:
+    """Start a duty run in Excel (replaces Supabase version)."""
+    now_dt = now_ist()
+    est = _safe_int(duty.get("est_minutes"), 15)
+    due_dt = now_dt + timedelta(minutes=est)
+
+    payload = {
+        "id": str(uuid.uuid4()),
+        "date": now_dt.date().isoformat(),
+        "assistant": assistant,
+        "duty_id": duty.get("duty_id"),
+        "status": "IN_PROGRESS",
+        "started_at": now_dt.isoformat(),
+        "due_at": due_dt.isoformat(),
+        "op": duty.get("op"),
+        "est_minutes": est,
+    }
+
+    try:
+        runs_df = load_duty_runs_sheet()
+        new_row = pd.DataFrame([payload])
+        combined = pd.concat([runs_df, new_row], ignore_index=True)
+        save_duty_runs_sheet(combined)
+        return payload["id"], payload
+    except Exception as e:
+        print(f"Failed to start duty: {e}")
+        return None, payload
+
+def mark_duty_done_excel(run_id: str) -> bool:
+    """Mark duty run as DONE in Excel (replaces Supabase version)."""
+    if not run_id:
+        return False
+    try:
+        runs_df = load_duty_runs_sheet()
+        if runs_df.empty:
+            return False
+
+        # Update the row with matching id
+        runs_df.loc[runs_df["id"] == run_id, "status"] = "DONE"
+        runs_df.loc[runs_df["id"] == run_id, "ended_at"] = now_ist().isoformat()
+
+        save_duty_runs_sheet(runs_df)
+        return True
+    except Exception as e:
+        print(f"Failed to mark duty done: {e}")
+        return False
+
+def search_patients_excel(query: str, limit: int = 50) -> list[dict[str, str]]:
+    """Search patients from Excel sheet (replaces Supabase version)."""
+    q = (query or "").strip().lower()
+    if not q:
+        return []
+
+    try:
+        patients_df = load_patients_sheet()
+        if patients_df.empty:
+            return []
+
+        # Filter by id or name containing query
+        matching = patients_df[
+            (patients_df["id"].astype(str).str.lower().str.contains(q, na=False)) |
+            (patients_df["name"].astype(str).str.lower().str.contains(q, na=False))
+        ].head(limit)
+
+        return matching.to_dict("records") if not matching.empty else []
+    except Exception as e:
+        print(f"Error searching patients: {e}")
+        return []
 
 @st.cache_data(ttl=5)
 def db_get_one_attendance(_supabase, date_str: str, assistant: str):
@@ -555,7 +802,7 @@ def _load_attendance_range_supabase(
 
 
 @st.cache_data(ttl=5)
-def _load_attendance_today_excel(_excel_path: str | None, date_str: str) -> list[dict[str, Any]]:
+def _load_attendance_today_excel(_excel_path: Optional[str], date_str: str) -> list[dict[str, Any]]:
     try:
         att_df = load_attendance_sheet(_excel_path)
         if att_df is None or att_df.empty:
@@ -600,7 +847,7 @@ def _format_punch_time(val: str) -> str:
 
 def _assistant_punch_state(
     assistant_upper: str,
-    punch_map: dict[str, dict[str, str]] | None,
+    punch_map: Optional[dict[str, dict[str, str]]],
 ) -> tuple[str, str, str]:
     if not punch_map:
         return "NONE", "", ""
@@ -616,7 +863,7 @@ def _assistant_punch_state(
     return "NONE", punch_in, punch_out
 
 
-def _calc_worked_minutes(punch_in: str, punch_out: str) -> int | None:
+def _calc_worked_minutes(punch_in: str, punch_out: str) -> Optional[int]:
     in_min = time_to_minutes(punch_in)
     out_min = time_to_minutes(punch_out)
     if in_min is None or out_min is None:
@@ -663,7 +910,7 @@ def db_punch_out(supabase, date_str: str, assistant: str, now_time: str):
     except Exception as e:
         st.error(f"Punch out failed: {e}")
 
-def sidebar_punch_widget(schedule_df: pd.DataFrame, excel_path: str | None = None):
+def sidebar_punch_widget(schedule_df: pd.DataFrame, excel_path: Optional[str] = None):
     today = datetime.now(IST).date().isoformat()
     now_hhmm = datetime.now(IST).strftime("%H:%M")
 
@@ -772,85 +1019,20 @@ def sidebar_punch_widget_supabase(schedule_df: pd.DataFrame, supabase):
 # ================= DUTY REMINDER (SUPABASE) =================
 @st.cache_data(ttl=5)
 def fetch_active_duty_assignments(_supabase, assistant: str) -> list[dict[str, Any]]:
-    if not _supabase or not assistant:
-        return []
-    try:
-        res = (
-            _supabase.table("duty_assignments")
-            .select("id,duty_id,assistant,op,est_minutes,active")
-            .eq("assistant", assistant)
-            .eq("active", True)
-            .execute()
-        )
-        assignments = res.data or []
-        duty_ids = [a.get("duty_id") for a in assignments if a.get("duty_id")]
-        if not duty_ids:
-            return []
-        duty_res = (
-            _supabase.table("duties_master")
-            .select("id,title,frequency,default_minutes,op,active")
-            .in_("id", duty_ids)
-            .eq("active", True)
-            .execute()
-        )
-        duties = {d["id"]: d for d in (duty_res.data or []) if d.get("id")}
-        out: list[dict[str, Any]] = []
-        for a in assignments:
-            duty = duties.get(a.get("duty_id"))
-            if not duty:
-                continue
-            est = a.get("est_minutes") if a.get("est_minutes") is not None else duty.get("default_minutes", 15)
-            out.append(
-                {
-                    "assignment_id": a.get("id"),
-                    "duty_id": duty.get("id"),
-                    "title": duty.get("title", ""),
-                    "frequency": str(duty.get("frequency", "")).upper(),
-                    "est_minutes": _safe_int(est, 15),
-                    "op": a.get("op") or duty.get("op", ""),
-                }
-            )
-        return out
-    except Exception as e:
-        st.warning(f"Unable to load duty assignments: {e}")
-        return []
+    # Using Excel backend (Supabase disabled)
+    return fetch_active_duty_assignments_excel(assistant)
 
 
 @st.cache_data(ttl=5)
 def fetch_duty_runs_since(_supabase, assistant: str, start_date_iso: str):
-    if not _supabase or not assistant:
-        return []
-    try:
-        res = (
-            _supabase.table("duty_runs")
-            .select("id,date,assistant,duty_id,status,started_at,due_at,ended_at,est_minutes,op")
-            .eq("assistant", assistant)
-            .gte("date", start_date_iso)
-            .execute()
-        )
-        return res.data or []
-    except Exception as e:
-        st.warning(f"Unable to load duty runs: {e}")
-        return []
+    # Using Excel backend (Supabase disabled)
+    return fetch_duty_runs_since_excel(assistant, start_date_iso)
 
 
 @st.cache_data(ttl=5)
 def fetch_active_duty_run(_supabase, assistant: str):
-    if not _supabase or not assistant:
-        return None
-    try:
-        res = (
-            _supabase.table("duty_runs")
-            .select("id,date,assistant,duty_id,status,started_at,due_at,est_minutes,op")
-            .eq("assistant", assistant)
-            .eq("status", "IN_PROGRESS")
-            .order("started_at", desc=True)
-            .limit(1)
-            .execute()
-        )
-        return res.data[0] if res.data else None
-    except Exception:
-        return None
+    # Using Excel backend (Supabase disabled)
+    return fetch_active_duty_run_excel(assistant)
 
 
 def compute_pending_duties(assignments: list[dict[str, Any]], runs: list[dict[str, Any]], today_date) -> dict[str, list[dict[str, Any]]]:
@@ -879,50 +1061,16 @@ def compute_pending_duties(assignments: list[dict[str, Any]], runs: list[dict[st
 
 
 def start_duty_run_supabase(supabase, assistant: str, duty: dict[str, Any]):
-    now_dt = now_ist()
-    est = _safe_int(duty.get("est_minutes"), 15)
-    due_dt = now_dt + timedelta(minutes=est)
-    payload = {
-        "date": now_dt.date().isoformat(),
-        "assistant": assistant,
-        "duty_id": duty.get("duty_id"),
-        "status": "IN_PROGRESS",
-        "started_at": now_dt.isoformat(),
-        "due_at": due_dt.isoformat(),
-        "op": duty.get("op"),
-        "est_minutes": est,
-    }
-    try:
-        res = supabase.table("duty_runs").insert(payload).execute()
-        try:
-            fetch_active_duty_run.clear()
-            fetch_duty_runs_since.clear()
-        except Exception:
-            pass
-        run_id = res.data[0]["id"] if res.data else None
-        return run_id, payload
-    except Exception as e:
-        st.error(f"Failed to start duty: {e}")
-        return None, payload
+    # Using Excel backend (Supabase disabled)
+    return start_duty_run_excel(assistant, duty)
 
 
 def mark_duty_done_supabase(supabase, run_id: str):
-    if not supabase or not run_id:
-        return False
-    try:
-        supabase.table("duty_runs").update({"status": "DONE", "ended_at": now_ist().isoformat()}).eq("id", run_id).execute()
-        try:
-            fetch_active_duty_run.clear()
-            fetch_duty_runs_since.clear()
-        except Exception:
-            pass
-        return True
-    except Exception as e:
-        st.error(f"Failed to close duty: {e}")
-        return False
+    # Using Excel backend (Supabase disabled)
+    return mark_duty_done_excel(run_id)
 
 
-def compute_free_minutes_for_assistant(schedule_df: pd.DataFrame, assistant: str) -> int | None:
+def compute_free_minutes_for_assistant(schedule_df: pd.DataFrame, assistant: str) -> Optional[int]:
     if schedule_df is None or schedule_df.empty or not assistant:
         return None
     assistant_upper = str(assistant).strip().upper()
@@ -1117,10 +1265,6 @@ def render_duty_reminder_widget(schedule_df: pd.DataFrame, supabase):
 
 # ================ DUTY ADMIN (SUPABASE) ================
 def render_duties_master_admin(supabase):
-    if not supabase:
-        st.info("Supabase not configured. Add Supabase secrets to manage duties.")
-        return
-
     st.subheader("🗂 Duties Master (Weekly / Monthly)")
 
     with st.form("add_duty_form"):
@@ -1139,23 +1283,25 @@ def render_duties_master_admin(supabase):
                 st.error("Duty name required")
             else:
                 try:
-                    supabase.table("duties_master").insert(
-                        {
-                            "title": title,
-                            "frequency": frequency,
-                            "default_minutes": int(default_minutes),
-                            "op": op,
-                            "active": active,
-                        }
-                    ).execute()
+                    duties_df = load_duties_master_sheet()
+                    new_duty = pd.DataFrame([{
+                        "id": str(uuid.uuid4()),
+                        "title": title,
+                        "frequency": frequency,
+                        "default_minutes": int(default_minutes),
+                        "op": op,
+                        "active": active,
+                        "created_at": now_ist().isoformat(),
+                    }])
+                    combined = pd.concat([duties_df, new_duty], ignore_index=True)
+                    save_duties_master_sheet(combined)
                     st.success("Duty added successfully ✅")
                     st.rerun()
                 except Exception as e:
                     st.error(f"Failed to add duty: {e}")
 
     try:
-        duties_resp = supabase.table("duties_master").select("*").order("created_at").execute()
-        duties = duties_resp.data or []
+        duties = load_duties_master_sheet().to_dict("records")
     except Exception as e:
         st.error(f"Failed to load duties: {e}")
         duties = []
@@ -1171,20 +1317,12 @@ def render_duties_master_admin(supabase):
 
 
 def render_duty_assignment_admin(supabase, assistants: list[str]):
-    if not supabase:
-        st.info("Supabase not configured. Add Supabase secrets to manage duties.")
-        return
-
     st.subheader("👥 Assign Duties to Assistants")
 
     try:
-        duty_res = (
-            supabase.table("duties_master")
-            .select("id,title")
-            .eq("active", True)
-            .execute()
-        )
-        duties = duty_res.data or []
+        duties_df = load_duties_master_sheet()
+        active_duties = duties_df[duties_df["active"].astype(str).str.lower() == "true"]
+        duties = active_duties.to_dict("records") if not active_duties.empty else []
     except Exception as e:
         st.error(f"Failed to load duties: {e}")
         duties = []
@@ -1208,24 +1346,38 @@ def render_duty_assignment_admin(supabase, assistants: list[str]):
         submitted = st.form_submit_button("📌 Assign Duty")
         if submitted:
             try:
-                supabase.table("duty_assignments").upsert(
-                    {
-                        "duty_id": duty_map.get(duty_title),
-                        "assistant": assistant,
-                        "est_minutes": int(est_minutes),
-                        "op": op or None,
-                        "active": active,
-                    },
-                    on_conflict="duty_id,assistant",
-                ).execute()
+                assigns_df = load_duty_assignments_sheet()
+                # Check if assignment exists and update or append
+                existing = assigns_df[
+                    (assigns_df["duty_id"] == duty_map.get(duty_title)) &
+                    (assigns_df["assistant"].astype(str).str.strip() == assistant)
+                ]
+
+                new_assign = {
+                    "id": str(uuid.uuid4()),
+                    "duty_id": duty_map.get(duty_title),
+                    "assistant": assistant,
+                    "est_minutes": int(est_minutes),
+                    "op": op or "",
+                    "active": active,
+                }
+
+                if not existing.empty:
+                    # Update existing
+                    assigns_df.loc[existing.index[0]] = new_assign
+                else:
+                    # Add new
+                    new_row = pd.DataFrame([new_assign])
+                    assigns_df = pd.concat([assigns_df, new_row], ignore_index=True)
+
+                save_duty_assignments_sheet(assigns_df)
                 st.success("Duty assigned successfully ✅")
                 st.rerun()
             except Exception as e:
                 st.error(f"Failed to assign duty: {e}")
 
     try:
-        assigns_resp = supabase.table("duty_assignments").select("*").execute()
-        assigns = assigns_resp.data or []
+        assigns = load_duty_assignments_sheet().to_dict("records")
     except Exception as e:
         st.error(f"Failed to load assignments: {e}")
         assigns = []
@@ -1234,7 +1386,7 @@ def render_duty_assignment_admin(supabase, assistants: list[str]):
         st.data_editor(
             assigns,
             use_container_width=True,
-            disabled=["id", "created_at"],
+            disabled=["id"],
             num_rows="dynamic",
             key="duty_assign_editor",
         )
@@ -1967,7 +2119,7 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
             st.session_state["compact_edit_open"] = False
             st.session_state["compact_edit_context"] = {}
 
-        def _compact_normalize_time_input(raw_value: str) -> tuple[str, str | None]:
+        def _compact_normalize_time_input(raw_value: str) -> tuple[str, Optional[str]]:
             text = str(raw_value or "").strip()
             if not text:
                 return "", None
@@ -3694,7 +3846,7 @@ now_epoch = int(time_module.time())
 # ================ TIME UTILITY FUNCTIONS ================
 # Define time conversion functions early so they can be used throughout the code
 
-def _coerce_to_time_obj(time_value: Any) -> time_type | None:
+def _coerce_to_time_obj(time_value: Any) -> Optional[time_type]:
     """Best-effort coercion of many time representations into a datetime.time.
 
     Supports:
@@ -3801,7 +3953,7 @@ def _time_to_picker_parts(time_value: Any) -> tuple[str, str, str]:
         ampm = "PM"
     return f"{hour_12:02d}", f"{t.minute:02d}", ampm
 
-def _time_from_picker_parts(hour_str: str, minute_str: str, ampm: str) -> tuple[str, str | None]:
+def _time_from_picker_parts(hour_str: str, minute_str: str, ampm: str) -> tuple[str, Optional[str]]:
     hour_text = str(hour_str or "").strip()
     minute_text = str(minute_str or "").strip()
     if not hour_text and not minute_text:
@@ -3992,7 +4144,7 @@ def _get_allocation_config() -> dict[str, Any]:
     return {}
 
 
-def _get_allocation_department_config(department: str, config: dict[str, Any] | None = None) -> dict[str, Any]:
+def _get_allocation_department_config(department: str, config: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     dept_upper = str(department).strip().upper()
     if not dept_upper:
         return {}
@@ -4007,7 +4159,7 @@ def _get_allocation_department_config(department: str, config: dict[str, Any] | 
     return {}
 
 
-def _get_global_allocation_config(config: dict[str, Any] | None = None) -> dict[str, bool]:
+def _get_global_allocation_config(config: Optional[dict[str, Any]] = None) -> dict[str, bool]:
     cfg = config or _get_allocation_config()
     if not isinstance(cfg, dict):
         return {
@@ -4023,7 +4175,7 @@ def _get_global_allocation_config(config: dict[str, Any] | None = None) -> dict[
     }
 
 
-def _get_config_department_maps(config: dict[str, Any] | None = None) -> dict[str, Any]:
+def _get_config_department_maps(config: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     cfg = config or _get_allocation_config()
     doctor_map: dict[str, str] = {}
     assistant_map: dict[str, str] = {}
@@ -4167,73 +4319,32 @@ def _is_blank_cell(value: Any) -> bool:
 
 DEPARTMENTS = {
     "PROSTHO": {
-        "doctors": _unique_preserve_order([
-            "DR.SHIFA",
-        ]),
-        "assistants": _unique_preserve_order([
-            "ARCHANA",
-            "SHAKSHI",
-            "RAJA",
-            "NITIN",
-            "ANSHIKA",
-            "BABU",
-            "PRAMOTH",
-            "RESHMA",
-        ]),
+        "doctors": _unique_preserve_order([]),  # Empty - add manually via UI
+        "assistants": _unique_preserve_order([]),  # Empty - add manually via UI
         "allocation_rules": {
-            # FIRST: Anshika primarily (with fallbacks)
-            # Time overrides: Archana after 1pm, Shakshi after 3:30pm
             "FIRST": {
-                "default": ["ANSHIKA", "RAJA", "NITIN", "RESHMA", "PRAMOTH", "BABU"],
-                "time_override": [(13, "ARCHANA"), (15.5, "SHAKSHI")]
+                "default": [],
+                "time_override": []
             },
             "SECOND": {
-                # When Anshika is used on FIRST, prefer Archana on SECOND
-                "when_first_is": {"ANSHIKA": ["ARCHANA", "NITIN", "BABU", "RAJA", "RESHMA", "PRAMOTH"]},
-                "default": ["NITIN", "ANSHIKA", "BABU", "RAJA", "RESHMA", "PRAMOTH"]
+                "when_first_is": {},
+                "default": []
             },
         }
     },
     "ENDO": {
-        "doctors": _unique_preserve_order([
-            "DR.FARHATH",
-            "DR.NIMAI",
-            "DR.SHRUTI",
-            "DR.KALPANA",
-            "DR.MANVEEN",
-            "DR.NEHA",
-        ]),
-        "assistants": _unique_preserve_order([
-            "ANYA",
-            "LAVANYA",
-            "ROHINI",
-            "MUKHILA",
-            "SHAKSHI",
-            "ARCHANA",
-            "ANSHIKA",  # shared
-        ]),
+        "doctors": _unique_preserve_order([]),  # Empty - add manually via UI
+        "assistants": _unique_preserve_order([]),  # Empty - add manually via UI
         "allocation_rules": {
-            # Doctor-specific and time-based allocation for ENDO
             "FIRST": {
-                # DR. NIMAI: Archana only (one assistant)
-                "DR.NIMAI": ["ARCHANA"],
-                # Other doctors: At least two assistants
-                "DR.FARHATH": ["ANYA", "LAVANYA", "ROHINI"],
-                "DR.SHRUTI": ["LAVANYA", "ANYA", "ROHINI"],
-                "DR.KALPANA": ["ROHINI", "ANYA", "LAVANYA"],
-                "DR.MANVEEN": ["ANYA", "ROHINI", "LAVANYA"],
-                "DR.NEHA": ["LAVANYA", "ROHINI", "ANYA"],
-                # Default: Anya after 12pm, then Lavanya, Rohini
-                "default": ["LAVANYA", "ROHINI", "ANYA"],
-                "time_override": [(12, "ANYA")]
+                "default": [],
+                "time_override": []
             },
-            # SECOND: Mukhila, Shakshi, Archana, Rohini
             "SECOND": {
-                "default": ["MUKHILA", "SHAKSHI", "ARCHANA", "ROHINI"]
+                "default": []
             },
-            # Third: Rohini, Shakshi, Archana, Mukhila (if available)
             "Third": {
-                "default": ["ROHINI", "SHAKSHI", "ARCHANA", "MUKHILA"]
+                "default": []
             },
         }
     },
@@ -4376,7 +4487,7 @@ def is_assistant_blocked(assistant: str, check_time: Any) -> tuple[bool, str]:
     return False, ""
 
 
-def _time_to_hhmm(t: time_type | None) -> str:
+def _time_to_hhmm(t: Optional[time_type]) -> str:
     if t is None:
         return ""
     return f"{t.hour:02d}:{t.minute:02d}"
@@ -4446,7 +4557,7 @@ def _deserialize_time_blocks(value) -> list[dict]:
     return out
 
 
-def _get_meta_from_df(df_any: pd.DataFrame | None) -> dict:
+def _get_meta_from_df(df_any: Optional[DataFrame]) -> dict:
     try:
         if df_any is not None and hasattr(df_any, "attrs"):
             meta = df_any.attrs.get("meta")
@@ -4465,7 +4576,7 @@ def _set_meta_on_df(df_any: pd.DataFrame, meta: dict) -> None:
         pass
 
 
-def _sync_time_blocks_from_meta(df_any: pd.DataFrame | None) -> None:
+def _sync_time_blocks_from_meta(df_any: Optional[DataFrame]) -> None:
     """Load persisted time blocks into session_state (once per run)."""
     try:
         meta = _get_meta_from_df(df_any)
@@ -4524,7 +4635,7 @@ def is_assistant_available(
     check_in_time,
     check_out_time,
     df_schedule: pd.DataFrame,
-    exclude_row_id: str | None = None,
+    exclude_row_id: Optional[str] = None,
 ) -> tuple[bool, str]:
     """
     Check if an assistant is available during a time window.
@@ -4613,7 +4724,7 @@ def is_assistant_available(
     return True, ""
 
 
-def _remove_assistant_assignments(df_schedule: pd.DataFrame | None, assistant_name: str) -> pd.DataFrame | None:
+def _remove_assistant_assignments(df_schedule: Optional[DataFrame], assistant_name: str) -> Optional[DataFrame]:
     """Clear all allotments for an assistant (FIRST/SECOND/Third). Returns updated DF or None if no change."""
     if df_schedule is None or df_schedule.empty:
         return None
@@ -4649,7 +4760,7 @@ def _pref_allows_role(value: Any) -> bool:
     return True
 
 
-def _to_float(value: Any) -> float | None:
+def _to_float(value: Any) -> Optional[float]:
     try:
         return float(value)
     except Exception:
@@ -4765,7 +4876,7 @@ def _rule_candidates_for_role(
     return _unique_preserve_order(candidates)
 
 
-def _assistant_loads(df_schedule: pd.DataFrame, exclude_row_id: str | None = None) -> dict[str, int]:
+def _assistant_loads(df_schedule: pd.DataFrame, exclude_row_id: Optional[str] = None) -> dict[str, int]:
     counts: dict[str, int] = {}
     if df_schedule is None or df_schedule.empty:
         return counts
@@ -4840,8 +4951,8 @@ def _allocate_assistants_for_slot(
     in_time: Any,
     out_time: Any,
     df_schedule: pd.DataFrame,
-    exclude_row_id: str | None = None,
-    current_assignments: dict[str, Any] | None = None,
+    exclude_row_id: Optional[str] = None,
+    current_assignments: Optional[dict[str, Any]] = None,
     only_fill_empty: bool = False,
 ) -> dict[str, str]:
     result = {"FIRST": "", "SECOND": "", "Third": ""}
@@ -4946,10 +5057,10 @@ def get_available_assistants(
     check_in_time: Any,
     check_out_time: Any,
     df_schedule: pd.DataFrame,
-    exclude_row_id: str | None = None,
-    assistants_override: list[str] | None = None,
-    free_now_set: set[str] | None = None,
-    free_status_map: dict[str, dict[str, str]] | None = None,
+    exclude_row_id: Optional[str] = None,
+    assistants_override: Optional[list[str]] = None,
+    free_now_set: Optional[set[str]] = None,
+    free_status_map: Optional[dict[str, dict[str, str]]] = None,
 ) -> list[dict[str, Any]]:
     """
     Get list of available assistants for a department at a specific time.
@@ -4992,7 +5103,7 @@ def auto_allocate_assistants(
     in_time: Any,
     out_time: Any,
     df_schedule: pd.DataFrame,
-    exclude_row_id: str | None = None,
+    exclude_row_id: Optional[str] = None,
 ) -> dict[str, str]:
     """
     Automatically allocate assistants based on department and availability.
@@ -5075,8 +5186,8 @@ def _auto_fill_assistants_for_row(df_schedule: pd.DataFrame, row_index: int, onl
 
 def get_current_assistant_status(
     df_schedule: pd.DataFrame,
-    assistants: list[str] | None = None,
-    punch_map: dict[str, dict[str, str]] | None = None,
+    assistants: Optional[list[str]] = None,
+    punch_map: Optional[dict[str, dict[str, str]]] = None,
 ) -> dict[str, dict[str, str]]:
     """
     Get real-time status of all assistants.
@@ -5416,7 +5527,7 @@ def _profiles_table_ready(_supabase, table_name: str) -> tuple[bool, str]:
         return False, str(e)
 
 
-def _render_profiles_setup_help(table_name: str, err: str | None = None) -> None:
+def _render_profiles_setup_help(table_name: str, err: Optional[str] = None) -> None:
     st.error("Supabase profiles table is missing or misconfigured.")
     if err:
         st.caption(f"Details: {err}")
@@ -5549,6 +5660,9 @@ def save_profiles(df: pd.DataFrame, sheet_name: str) -> bool:
             writer.book = wb
             writer.sheets = {ws.title: ws for ws in wb.worksheets}
             clean_df.to_excel(writer, sheet_name=sheet_name, index=False)
+            # Ensure at least one sheet is visible
+            if wb.sheetnames:
+                wb[wb.sheetnames[0]].sheet_state = 'visible'
             writer.save()
         try:
             _get_active_assistant_profile_names.clear()
@@ -6095,12 +6209,12 @@ if not USE_SUPABASE:
         or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
         or os.environ.get("SUPABASE_KEY")
     )
-    # Only enable Supabase if library is available AND credentials are valid
-    if SUPABASE_AVAILABLE and sup_url_hint and sup_key_hint and sup_url_hint.strip() and sup_key_hint.strip():
-        USE_SUPABASE = True
-        st.sidebar.success("🔗 Connected to Supabase")
-    else:
-        st.sidebar.info("📁 Using local Excel file (no cloud storage configured)")
+    # Supabase is disabled - using Excel-only mode
+    # if SUPABASE_AVAILABLE and sup_url_hint and sup_key_hint and sup_url_hint.strip() and sup_key_hint.strip():
+    #     USE_SUPABASE = True
+    #     st.sidebar.success("🔗 Connected to Supabase")
+    # else:
+    st.sidebar.info("📁 Using local Excel file")
 
 
 def _get_supabase_config_from_secrets_or_env():
@@ -6287,7 +6401,7 @@ def search_patients_from_supabase(
             return n
         return '"' + n.replace('"', '""') + '"'
 
-    def _run(_id: str, _name: str, *, server_filter: bool) -> list[dict] | None:
+    def _run(_id: str, _name: str, *, server_filter: bool) -> Optional[list[dict]]:
         select_str = f"{_quote_ident(_id)},{_quote_ident(_name)}"
         query = client.table(_patients_table).select(select_str)
 
@@ -6315,8 +6429,8 @@ def search_patients_from_supabase(
             raise
 
         # First try to infer actual column names by sampling 1 row.
-        inferred_id: str | None = None
-        inferred_name: str | None = None
+        inferred_id: Optional[str] = None
+        inferred_name: Optional[str] = None
         try:
             probe = client.table(_patients_table).select("*").limit(1).execute()
             probe_err = getattr(probe, "error", None)
@@ -6373,7 +6487,7 @@ def search_patients_from_supabase(
                 "Patient Name",
             ]
 
-            last_err: Exception | None = None
+            last_err: Optional[Exception] = None
             data = None
             for cid in id_candidates:
                 for cname in name_candidates:
@@ -6504,171 +6618,9 @@ def save_data_to_supabase(_url: str, _key: str, _table: str, _row_id: str, df: p
 
 # Try to connect to Supabase if credentials are available
 # PERFORMANCE: Only run full initialization once per session
-if SUPABASE_AVAILABLE:
-    # Check if already initialized this session
-    if st.session_state.get("supabase_init_done"):
-        # Quick restore: just reconnect the client from cached config
-        if st.session_state.get("supabase_use") and st.session_state.get("sup_url") and st.session_state.get("sup_key"):
-            supabase_client = _get_supabase_client(
-                st.session_state.get("sup_url"),
-                st.session_state.get("sup_key")
-            )
-            USE_SUPABASE = True
-    else:
-        # First-time initialization - run all setup
-        try:
-            sup_url, sup_key, sup_table, sup_row, profile_table = _get_supabase_config_from_secrets_or_env()
-
-            if sup_url and sup_key:
-                # Validate URL format
-                sup_url = sup_url.strip()
-                if not (sup_url.startswith("http://") or sup_url.startswith("https://")):
-                    raise ValueError(f"Invalid Supabase URL format: '{sup_url}'. Must start with http:// or https://")
-                if ".supabase.co" not in sup_url:
-                    st.sidebar.warning(f"⚠️ Unusual Supabase URL: '{sup_url}'. Expected format: https://xxxxx.supabase.co")
-
-                # Get client
-                supabase_client = _get_supabase_client(sup_url, sup_key)
-                if supabase_client is None:
-                    raise RuntimeError("Supabase client unavailable.")
-
-                # Set configuration
-                supabase_table_name = sup_table
-                supabase_row_id = sup_row
-                PROFILE_SUPABASE_TABLE = profile_table
-
-                # Quick connectivity check (only if not done recently)
-                if not _supabase_ready_recent():
-                    with st.spinner("🔗 Connecting to Supabase..."):
-                        _ = supabase_client.table(supabase_table_name).select("id").limit(1).execute()
-                    st.session_state.supabase_ready = True
-                    st.session_state.supabase_ready_at = time_module.time()
-                    st.sidebar.success("✅ Connected to Supabase")
-
-                USE_SUPABASE = True
-
-                # One-time profile seeding
-                if not st.session_state.get("supabase_profiles_seeded"):
-                    _seed_supabase_profiles_if_needed(supabase_client)
-                    st.session_state.supabase_profiles_seeded = True
-
-                # One-time staff refresh
-                if not st.session_state.get("supabase_staff_refreshed"):
-                    _refresh_staff_options_from_supabase(supabase_client)
-                    st.session_state.supabase_staff_refreshed = True
-
-                # Mark initialization as complete and cache config
-                st.session_state.supabase_init_done = True
-                st.session_state.supabase_use = True
-                st.session_state.sup_url = sup_url
-                st.session_state.sup_key = sup_key
-
-            else:
-                # Not configured - show setup helper
-                st.session_state.supabase_init_done = True
-                st.session_state.supabase_use = False
-
-                with st.sidebar.expander("✅ Quick setup (Supabase)", expanded=False):
-                    st.markdown(
-                        "Add these secrets in Streamlit Cloud → Settings → Secrets:\n"
-                        "- `supabase_url`\n"
-                        "- `supabase_key` (anon key) **or** `supabase_service_role_key` (recommended)\n"
-                        "\nThen create the table in Supabase (SQL Editor):"
-                    )
-                    st.code(
-                        "create table if not exists tdb_allotment_state (\n"
-                        "  id text primary key,\n"
-                        "  payload jsonb not null,\n"
-                        "  updated_at timestamptz not null default now()\n"
-                        ");\n",
-                        language="sql",
-                    )
-                    st.markdown(
-                        "If you use the **anon key**, you may need to adjust Row Level Security (RLS). "
-                        "Recommended: enable RLS and add policies allowing the single state row (id = 'main'):"
-                    )
-                    st.code(
-                        "alter table tdb_allotment_state enable row level security;\n\n"
-                        "create policy \"read main\" on tdb_allotment_state\n"
-                        "  for select\n"
-                        "  using (id = 'main');\n\n"
-                        "create policy \"insert main\" on tdb_allotment_state\n"
-                        "  for insert\n"
-                        "  with check (id = 'main');\n\n"
-                        "create policy \"update main\" on tdb_allotment_state\n"
-                        "  for update\n"
-                        "  using (id = 'main')\n"
-                        "  with check (id = 'main');\n",
-                        language="sql",
-                    )
-
-        except Exception as e:
-            # Handle all initialization errors gracefully
-            st.session_state.supabase_ready = False
-            st.session_state.supabase_ready_at = 0.0
-            st.session_state.supabase_profiles_seeded = False
-            st.session_state.supabase_staff_refreshed = False
-            st.session_state.supabase_init_done = True
-            st.session_state.supabase_use = False
-            supabase_client = None
-            USE_SUPABASE = False
-
-            # Show user-friendly error message
-            error_msg = str(e).lower()
-
-            if "name or service not known" in error_msg or "errno -2" in error_msg:
-                st.sidebar.warning(
-                    "⚠️ Supabase connection failed (network/DNS error)\n\n"
-                    "**Using local Excel file instead** 📁\n\n"
-                    "Possible causes:\n"
-                    "• Invalid Supabase URL\n"
-                    "• Network connectivity issue\n"
-                    "• DNS resolution failure"
-                )
-            elif "rls" in error_msg or "permission" in error_msg:
-                st.sidebar.warning(
-                    "⚠️ Supabase permission denied\n\n"
-                    "**Using local Excel file instead** 📁\n\n"
-                    "Tip: If using `supabase_key` (anon key), RLS may block reads/writes. "
-                    "Add `supabase_service_role_key` in secrets or disable RLS for the table."
-                )
-            else:
-                # Generic error with diagnostics
-                present = {}
-                try:
-                    if hasattr(st, 'secrets'):
-                        interesting = ["supabase_url", "supabase_key", "supabase_service_role_key"]
-                        present = {k: (k in st.secrets and bool(str(st.secrets.get(k, '')).strip())) for k in interesting}
-                except Exception:
-                    pass
-
-                st.sidebar.warning(
-                    f"⚠️ Supabase connection failed: {e}\n\n"
-                    f"**Using local Excel file instead** 📁"
-                    + (f"\n\nCredentials configured: {', '.join([k for k, v in present.items() if v])}" if present else "")
-                )
-
-            # Show fallback status
-            st.sidebar.info("📁 Local Excel Mode Active\n\nData will be saved to: Putt Allotment.xlsx")
-
-# Force Supabase if configured (skips Excel fallback)
-if FORCE_SUPABASE and not USE_SUPABASE:
-    try:
-        sup_url, sup_key, sup_table, sup_row, profile_table = _get_supabase_config_from_secrets_or_env()
-        if sup_url and sup_key:
-            supabase_client = _get_supabase_client(sup_url, sup_key)
-            if supabase_client is not None:
-                supabase_table_name = sup_table
-                supabase_row_id = sup_row
-                PROFILE_SUPABASE_TABLE = profile_table
-                USE_SUPABASE = True
-                st.sidebar.info("🔗 Supabase forced via config")
-            else:
-                st.sidebar.warning("⚠️ Supabase client failed to initialize. Using local Excel.")
-        else:
-            st.sidebar.info("📁 Supabase not configured. Using local Excel file.")
-    except Exception as e:
-        st.sidebar.error(f"❌ Supabase config error: {e}. Using local Excel.")
+# Supabase initialization is disabled - using Excel-only mode
+# All data is now persisted in Putt Allotment.xlsx
+st.sidebar.info("📁 Excel-only mode: All data stored locally")
 
 def _data_editor_has_pending_edits(editor_key: str) -> bool:
     """Detect pending edits without touching widget state.
@@ -6685,7 +6637,7 @@ def _data_editor_has_pending_edits(editor_key: str) -> bool:
         return False
 
 
-def _get_meta_save_version(meta: dict | None) -> int | None:
+def _get_meta_save_version(meta: Optional[dict]) -> Optional[int]:
     if not isinstance(meta, dict):
         return None
     try:
@@ -6697,14 +6649,14 @@ def _get_meta_save_version(meta: dict | None) -> int | None:
         return None
 
 
-def _meta_for_hash(meta: dict | None) -> dict:
+def _meta_for_hash(meta: Optional[dict]) -> dict:
     if not isinstance(meta, dict):
         return {}
     skip = {"time_blocks_updated_at", "saved_at", "save_version"}
     return {k: v for k, v in meta.items() if k not in skip}
 
 
-def _compute_save_hash(df_any: pd.DataFrame, meta: dict | None) -> str:
+def _compute_save_hash(df_any: pd.DataFrame, meta: Optional[dict]) -> str:
     try:
         data_hash = hashlib.md5(pd.util.hash_pandas_object(df_any, index=True).values.tobytes()).hexdigest()
     except Exception:
@@ -6718,7 +6670,7 @@ def _compute_save_hash(df_any: pd.DataFrame, meta: dict | None) -> str:
     return hashlib.md5(f"{data_hash}|{meta_hash}".encode("utf-8")).hexdigest()
 
 
-def _fetch_remote_save_version() -> int | None:
+def _fetch_remote_save_version() -> Optional[int]:
     try:
         if USE_SUPABASE:
             sup_url, sup_key, sup_table, sup_row, _ = _get_supabase_config_from_secrets_or_env()
@@ -8107,87 +8059,46 @@ if category == "Scheduling":
                     st.error(f"Error deleting row: {e}")
     
     with col_search:
-        # Patient search
-        if USE_SUPABASE and SUPABASE_AVAILABLE:
-            sup_url, sup_key, _, _, _ = _get_supabase_config_from_secrets_or_env()
-            patients_table, id_col, name_col = _get_patients_config_from_secrets_or_env()
-    
-            patient_query = st.text_input(
-                "Patient search",
-                value="",
-                key="patient_search",
-                placeholder="Search patient…",
+        # Patient search (Excel-based)
+        patient_query = st.text_input(
+            "Patient search",
+            value="",
+            key="patient_search",
+            placeholder="Search patient…",
+            label_visibility="collapsed",
+        )
+
+        q = str(patient_query or "").strip()
+        try:
+            results = search_patients_excel(q, limit=20)
+        except Exception as e:
+            st.error(f"Patient search error: {e}")
+            results = []
+
+        if results:
+            option_map = {f"{p.get('name', '')} · {p.get('id', '')}": (p.get("id"), p.get("name")) for p in results}
+            option_strings = ["Select patient..."] + list(option_map.keys())
+
+            chosen_str = st.selectbox(
+                "Patient",
+                options=option_strings,
+                key="patient_select",
                 label_visibility="collapsed",
             )
-    
-            q = str(patient_query or "").strip()
-            try:
-                results = search_patients_from_supabase(
-                    sup_url, sup_key, patients_table, id_col, name_col, q, 20
-                )
-            except Exception as e:
-                err_text = str(e)
-                st.error("Patient search is not connected.")
-                st.caption(f"Error: {err_text}")
-    
-                # Common case: table doesn't exist yet.
-                if "PGRST205" in err_text or "Could not find the table" in err_text:
-                    with st.expander("✅ Fix: Create the patients table", expanded=True):
-                        st.markdown(
-                            "Your Supabase project does not have the patient master table yet. "
-                            "Create it in Supabase → SQL Editor, then reload the app."
-                        )
-                        st.code(
-                            "create table if not exists patients (\n"
-                            "  id text primary key,\n"
-                            "  name text not null\n"
-                            ");\n\n"
-                            "create index if not exists patients_name_idx on patients (name);\n",
-                            language="sql",
-                        )
-                        st.markdown(
-                            "If your patient table/columns have different names, set these in Streamlit Secrets:"
-                        )
-                        st.code(
-                            "supabase_patients_table = \"patients\"\n"
-                            "supabase_patients_id_col = \"id\"\n"
-                            "supabase_patients_name_col = \"name\"\n",
-                            language="toml",
-                        )
-                else:
-                    st.warning(
-                        f"Check Supabase table/columns: {patients_table}({id_col}, {name_col}). "
-                        "If you are using an anon key, RLS may block reads; add `supabase_service_role_key` in Secrets "
-                        "or create an RLS policy for the patients table."
-                    )
-                results = []
-    
-            if results:
-                option_map = {f"{p['name']} · {p['id']}": (p["id"], p["name"]) for p in results}
-                option_strings = ["Select patient..."] + list(option_map.keys())
-    
-                chosen_str = st.selectbox(
-                    "Patient",
-                    options=option_strings,
-                    key="patient_select",
-                    label_visibility="collapsed",
-                )
-                if chosen_str and chosen_str != "Select patient..." and chosen_str in option_map:
-                    pid, pname = option_map[chosen_str]
-                    st.session_state.selected_patient_id = str(pid)
-                    st.session_state.selected_patient_name = str(pname)
-            else:
-                if q:
-                    st.caption("❌ No matches found")
-                else:
-                    st.caption("🔍 Type to search patients")
-    
-            if st.session_state.selected_patient_id or st.session_state.selected_patient_name:
-                st.caption(
-                    f"Selected: {st.session_state.selected_patient_id} - {st.session_state.selected_patient_name}"
-                )
+            if chosen_str and chosen_str != "Select patient..." and chosen_str in option_map:
+                pid, pname = option_map[chosen_str]
+                st.session_state.selected_patient_id = str(pid)
+                st.session_state.selected_patient_name = str(pname)
         else:
-            st.caption("🔍 Patient search (Supabase only)")
+            if q:
+                st.caption("❌ No matches found")
+            else:
+                st.caption("🔍 Type to search patients")
+
+        if st.session_state.selected_patient_id or st.session_state.selected_patient_name:
+            st.caption(
+                f"Selected: {st.session_state.selected_patient_id} - {st.session_state.selected_patient_name}"
+            )
     
     view_cols = st.columns([0.2, 0.8], gap="small")
     with view_cols[0]:
@@ -8241,7 +8152,7 @@ if category == "Scheduling":
     display_all["Out Time"] = display_all["Out Time"].apply(lambda v: v if isinstance(v, time_type) else None)
     
     # Computed overtime indicator (uses scheduled Out Time vs current time)
-    def _compute_overtime_min(_row) -> int | None:
+    def _compute_overtime_min(_row) -> Optional[int]:
         try:
             s = str(_row.get("STATUS", "")).strip().upper()
             if ("ON GOING" not in s) and ("ONGOING" not in s):
@@ -8489,7 +8400,7 @@ if category == "Scheduling":
         st.session_state["full_edit_open"] = False
         st.session_state["full_edit_context"] = {}
 
-    def _full_normalize_time_input(raw_value: str) -> tuple[str, str | None]:
+    def _full_normalize_time_input(raw_value: str) -> tuple[str, Optional[str]]:
         text = str(raw_value or "").strip()
         if not text:
             return "", None
