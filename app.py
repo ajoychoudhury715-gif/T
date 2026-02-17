@@ -1265,6 +1265,14 @@ def render_duty_reminder_widget(schedule_df: pd.DataFrame, supabase):
 def render_duties_master_admin(supabase):
     st.subheader("🗂 Duties Master (Weekly / Monthly)")
 
+    # Load assistants for selection
+    try:
+        assistants_df = load_profiles("Assistants")
+        available_assistants = assistants_df["name"].dropna().unique().tolist() if not assistants_df.empty else []
+        available_assistants = sorted([str(a).strip() for a in available_assistants if str(a).strip()])
+    except Exception:
+        available_assistants = []
+
     with st.form("add_duty_form"):
         col1, col2 = st.columns(2)
         with col1:
@@ -1275,15 +1283,25 @@ def render_duties_master_admin(supabase):
             default_minutes = st.number_input("Estimated Time (minutes) *", min_value=5, step=5, value=15, key="duty_minutes_input")
             active = st.checkbox("Active", value=True, key="duty_active_check")
 
+        # Add assistants multi-select
+        selected_assistants = st.multiselect(
+            "Assign to Assistants (optional)",
+            options=available_assistants,
+            key="duty_assistants_multiselect",
+            help="Select assistants to auto-assign this duty to them"
+        )
+
         submitted = st.form_submit_button("➕ Add Duty")
         if submitted:
             if not title:
                 st.error("Duty name required")
             else:
                 try:
+                    # Create duty in Duties_Master
                     duties_df = load_duties_master_sheet()
+                    duty_id = str(uuid.uuid4())
                     new_duty = pd.DataFrame([{
-                        "id": str(uuid.uuid4()),
+                        "id": duty_id,
                         "title": title,
                         "frequency": frequency,
                         "default_minutes": int(default_minutes),
@@ -1293,7 +1311,26 @@ def render_duties_master_admin(supabase):
                     }])
                     combined = pd.concat([duties_df, new_duty], ignore_index=True)
                     save_duties_master_sheet(combined)
-                    st.success("Duty added successfully ✅")
+
+                    # Auto-assign to selected assistants
+                    if selected_assistants:
+                        assignments_df = load_duty_assignments_sheet()
+                        new_assignments = []
+                        for assistant in selected_assistants:
+                            new_assignments.append({
+                                "id": str(uuid.uuid4()),
+                                "duty_id": duty_id,
+                                "assistant": assistant,
+                                "op": op,
+                                "est_minutes": int(default_minutes),
+                                "active": "true",
+                            })
+                        new_assignments_df = pd.DataFrame(new_assignments)
+                        combined_assignments = pd.concat([assignments_df, new_assignments_df], ignore_index=True)
+                        save_duty_assignments_sheet(combined_assignments)
+                        st.success(f"Duty added and assigned to {len(selected_assistants)} assistant(s) ✅")
+                    else:
+                        st.success("Duty added successfully ✅")
                     st.rerun()
                 except Exception as e:
                     st.error(f"Failed to add duty: {e}")
