@@ -558,16 +558,27 @@ def load_excel_sheet(sheet_name: str, expected_columns: Optional[list] = None, e
 
 def save_excel_sheet(df: pd.DataFrame, sheet_name: str, excel_path: Optional[str] = None):
     """Save DataFrame to any Excel sheet (preserves all other sheets)."""
+    import os
     path = excel_path or file_path
+
     try:
-        # Load existing workbook to preserve all sheets
-        try:
-            wb = openpyxl.load_workbook(path)
-        except Exception:
-            # If file can't be loaded, create new workbook
+        # CRITICAL: Only create new workbook if file doesn't exist
+        # If file exists but can't be loaded, this is a serious error
+        if not os.path.exists(path):
+            # File doesn't exist, create new workbook
             wb = openpyxl.Workbook()
             if wb.active:
                 wb.remove(wb.active)
+        else:
+            # File exists, MUST load it successfully
+            try:
+                wb = openpyxl.load_workbook(path)
+            except Exception as e:
+                # File exists but can't be loaded - DON'T create new one!
+                # This protects against data loss
+                print(f"CRITICAL: Cannot load existing Excel file {path}: {e}")
+                print(f"Skipping save to prevent data loss of sheet: {sheet_name}")
+                return
 
         # Remove sheet if it exists (to avoid duplicates)
         if sheet_name in wb.sheetnames:
