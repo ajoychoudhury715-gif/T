@@ -946,11 +946,17 @@ def sidebar_punch_widget(schedule_df: pd.DataFrame, excel_path: Optional[str] = 
     now_hhmm = datetime.now(IST).strftime("%H:%M")
 
     att = load_attendance_sheet(excel_path)
-    assistants = get_assistants_list(schedule_df)
+
+    # Load assistants from Assistants sheet (not from schedule)
+    try:
+        assistants_df = load_profiles("Assistants")
+        assistants = sorted(assistants_df["name"].dropna().astype(str).str.strip().unique().tolist()) if not assistants_df.empty else []
+    except Exception:
+        assistants = []
 
     st.markdown("### 👇 Punch System")
     if not assistants:
-        st.caption("No assistants found in FIRST/SECOND/Third.")
+        st.caption("No assistants found in Assistants sheet. Add assistants first.")
         return
 
     assistant = st.selectbox("Select Assistant", assistants, key="sb_assistant")
@@ -1011,9 +1017,15 @@ def sidebar_punch_widget_supabase(schedule_df: pd.DataFrame, supabase):
 
     st.markdown("### 👇 Punch System")
 
-    assistants = extract_assistants(schedule_df)
+    # Load assistants from Assistants sheet (not from schedule)
+    try:
+        assistants_df = load_profiles("Assistants")
+        assistants = sorted(assistants_df["name"].dropna().astype(str).str.strip().unique().tolist()) if not assistants_df.empty else []
+    except Exception:
+        assistants = []
+
     if not assistants:
-        st.caption("No assistants found in FIRST/SECOND/Third.")
+        st.caption("No assistants found in Assistants sheet. Add assistants first.")
         return
 
     assistant = st.selectbox("Select Assistant", assistants, key="sb_assistant")
@@ -1159,9 +1171,15 @@ def render_duty_reminder_widget(schedule_df: pd.DataFrame, supabase):
     st.markdown("### 🧭 Duties")
     # Duties are now stored in Excel (supabase parameter kept for compatibility but not used)
 
-    assistants = extract_assistants(schedule_df)
+    # Load assistants from Assistants sheet (not from schedule)
+    try:
+        assistants_df = load_profiles("Assistants")
+        assistants = sorted(assistants_df["name"].dropna().astype(str).str.strip().unique().tolist()) if not assistants_df.empty else []
+    except Exception:
+        assistants = []
+
     if not assistants:
-        st.caption("No assistants found in FIRST/SECOND/Third.")
+        st.caption("No assistants found in Assistants sheet. Add assistants first.")
         return
 
     default_idx = 0
