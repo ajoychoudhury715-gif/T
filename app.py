@@ -9829,13 +9829,11 @@ if category == "Assistants" and assist_view == "Attendance":
 if category == "Admin/Settings":
     st.markdown("### 🔧 Admin / Settings")
     if admin_view == "Duties Manager":
-        if USE_SUPABASE and supabase_client is not None:
-            assistants_for_admin = extract_assistants(df if 'df' in locals() else df_raw if 'df_raw' in locals() else pd.DataFrame())
-            render_duties_master_admin(supabase_client)
-            st.divider()
-            render_duty_assignment_admin(supabase_client, assistants_for_admin)
-        else:
-            st.warning("Configure Supabase (url/key) to manage duties.")
+        # Duties are now stored in Excel (not Supabase)
+        assistants_for_admin = extract_assistants(df if 'df' in locals() else df_raw if 'df_raw' in locals() else pd.DataFrame())
+        render_duties_master_admin(None)  # Excel-based, supabase param not used
+        st.divider()
+        render_duty_assignment_admin(None, assistants_for_admin)  # Excel-based, supabase param not used
     else:
         st.write(f"Using Supabase: {USE_SUPABASE}")
         st.write(f"Excel path: {file_path}")
