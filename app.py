@@ -5580,8 +5580,13 @@ def load_profiles(sheet_name: str) -> pd.DataFrame:
             wb.save(file_path)
         try:
             wb = openpyxl.load_workbook(file_path)
-        except zipfile.BadZipFile:
+        except (zipfile.BadZipFile, KeyError, Exception):
             # Repair a corrupted workbook by recreating it
+            # (catches [Content_Types].xml missing errors and other corruption)
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
             wb = openpyxl.Workbook()
             wb.remove(wb.active)
             wb.create_sheet(sheet_name)
