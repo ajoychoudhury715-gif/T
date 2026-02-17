@@ -5464,7 +5464,37 @@ def get_current_assistant_status(
                 current_appt = appt
                 break
         
-        if current_appt:
+        # Check for active duty run (duty timer)
+        try:
+            duty_runs_df = load_duty_runs_sheet()
+            active_duty = duty_runs_df[
+                (duty_runs_df["assistant"].astype(str).str.strip() == assist_upper) &
+                (duty_runs_df["status"].astype(str).str.upper() == "IN_PROGRESS")
+            ] if not duty_runs_df.empty else pd.DataFrame()
+        except Exception:
+            active_duty = pd.DataFrame()
+
+        if not active_duty.empty:
+            # Assistant has active duty
+            duty_run = active_duty.iloc[0]
+            due_dt = _parse_iso_ts(duty_run.get("due_at"))
+            remaining_time = ""
+            if due_dt:
+                delta = due_dt - now_ist()
+                if delta.total_seconds() > 0:
+                    mins = int(delta.total_seconds() // 60)
+                    secs = int(delta.total_seconds() % 60)
+                    remaining_time = f" • {mins:02d}:{secs:02d}"
+
+            status[assist_upper] = {
+                "status": "BUSY",
+                "reason": f"On Duty{remaining_time}",
+                "duty_run_id": duty_run.get("id"),
+                "duty_id": duty_run.get("duty_id"),
+                "due_at": duty_run.get("due_at"),
+                "department": get_department_for_assistant(assist_upper)
+            }
+        elif current_appt:
             status[assist_upper] = {
                 "status": "BUSY",
                 "reason": f"With {current_appt.get('patient', 'patient')}",
