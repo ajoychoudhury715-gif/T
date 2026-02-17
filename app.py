@@ -5823,7 +5823,13 @@ def load_profiles(sheet_name: str) -> pd.DataFrame:
             wb.save(file_path)
         ws = wb[sheet_name]
         data = list(ws.values)
-        df = pd.DataFrame(data[1:], columns=data[0]) if len(data) > 1 else pd.DataFrame(columns=data[0])
+        if len(data) > 1:
+            df = pd.DataFrame(data[1:], columns=data[0])
+        elif len(data) == 1:
+            df = pd.DataFrame(columns=data[0])
+        else:
+            # Sheet is completely empty, use PROFILE_COLUMNS as default
+            df = pd.DataFrame(columns=PROFILE_COLUMNS)
         return _ensure_profile_df(df)
     except Exception as e:
         st.error(f"Error loading profiles '{sheet_name}': {e}")
