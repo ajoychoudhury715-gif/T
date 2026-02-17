@@ -1354,6 +1354,7 @@ def render_duties_master_admin(supabase):
 def render_duty_assignment_admin(supabase, assistants: list[str]):
     st.subheader("👥 Assign Duties to Assistants")
 
+    # Load duties
     try:
         duties_df = load_duties_master_sheet()
         active_duties = duties_df[duties_df["active"].astype(str).str.lower() == "true"]
@@ -1366,13 +1367,25 @@ def render_duty_assignment_admin(supabase, assistants: list[str]):
         st.warning("No active duties found.")
         return
 
+    # Load assistants from Assistants sheet (not from schedule)
+    try:
+        assistants_df = load_profiles("Assistants")
+        sheet_assistants = assistants_df["name"].dropna().unique().tolist() if not assistants_df.empty else []
+        sheet_assistants = sorted([str(a).strip() for a in sheet_assistants if str(a).strip()])
+    except Exception:
+        sheet_assistants = []
+
+    if not sheet_assistants:
+        st.warning("No assistants found in Assistants sheet. Add assistants first.")
+        return
+
     duty_map = {d["title"]: d["id"] for d in duties if d.get("title")}
 
     with st.form("assign_duty_form"):
         col1, col2 = st.columns(2)
         with col1:
             duty_title = st.selectbox("Duty *", list(duty_map.keys()), key="assign_duty_select")
-            assistant = st.selectbox("Assistant *", assistants, key="assign_assistant_select")
+            assistant = st.selectbox("Assistant *", sheet_assistants, key="assign_assistant_select")
         with col2:
             est_minutes = st.number_input("Time for this Assistant (minutes)", min_value=5, step=5, value=15, key="assign_minutes_input")
             op = st.selectbox("OP (optional)", ["", "OP1", "OP2", "OP3"], key="assign_op_select")
