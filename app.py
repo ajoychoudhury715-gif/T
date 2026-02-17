@@ -8157,48 +8157,8 @@ if category == "Scheduling":
             }
             df_raw = pd.concat([df_raw, pd.DataFrame([new_row])], ignore_index=True)
     
-    col_add, col_save, col_del_pick, col_del_btn, col_search = st.columns([0.20, 0.16, 0.18, 0.07, 0.39])
-    
-    # Selected patient from external patient DB (optional)
-    if "selected_patient_id" not in st.session_state:
-        st.session_state.selected_patient_id = ""
-    if "selected_patient_name" not in st.session_state:
-        st.session_state.selected_patient_name = ""
-    
-    with col_add:
-        if st.button(
-            "➕ Add Patient",
-            key="add_patient_btn",
-            help="Add a new patient row (uses selected patient if chosen)",
-            use_container_width=True,
-        ):
-            # Create a new empty row
-            new_row = {
-                "Patient ID": str(st.session_state.selected_patient_id or "").strip(),
-                "Patient Name": str(st.session_state.selected_patient_name or "").strip(),
-                "In Time": None,
-                "Out Time": None,
-                "Procedure": "",
-                "DR.": "",
-                "FIRST": "",
-                "SECOND": "",
-                "Third": "",
-                "CASE PAPER": "",
-                "OP": "",
-                "SUCTION": False,
-                "CLEANING": False,
-                "STATUS": "WAITING",
-                "REMINDER_ROW_ID": str(uuid.uuid4()),
-                "REMINDER_SNOOZE_UNTIL": pd.NA,
-                "REMINDER_DISMISSED": False
-            }
-            # Append to the original dataframe
-            new_row_df = pd.DataFrame([new_row])
-            df_raw_with_new = pd.concat([df_raw, new_row_df], ignore_index=True)
-            # Persist or queue the new patient row based on save mode
-            _maybe_save(df_raw_with_new, show_toast=False, message="New patient row added!")
-            st.success("New patient row added!")
-    
+    col_save, col_del_pick, col_del_btn = st.columns([0.20, 0.30, 0.15])
+
     with col_save:
         # Save button for the data editor
         if st.button(
@@ -8297,49 +8257,7 @@ if category == "Scheduling":
                     st.rerun()
                 except Exception as e:
                     st.error(f"Error deleting row: {e}")
-    
-    with col_search:
-        # Patient search (Excel-based)
-        patient_query = st.text_input(
-            "Patient search",
-            value="",
-            key="patient_search",
-            placeholder="Search patient…",
-            label_visibility="collapsed",
-        )
 
-        q = str(patient_query or "").strip()
-        try:
-            results = search_patients_excel(q, limit=20)
-        except Exception as e:
-            st.error(f"Patient search error: {e}")
-            results = []
-
-        if results:
-            option_map = {f"{p.get('name', '')} · {p.get('id', '')}": (p.get("id"), p.get("name")) for p in results}
-            option_strings = ["Select patient..."] + list(option_map.keys())
-
-            chosen_str = st.selectbox(
-                "Patient",
-                options=option_strings,
-                key="patient_select",
-                label_visibility="collapsed",
-            )
-            if chosen_str and chosen_str != "Select patient..." and chosen_str in option_map:
-                pid, pname = option_map[chosen_str]
-                st.session_state.selected_patient_id = str(pid)
-                st.session_state.selected_patient_name = str(pname)
-        else:
-            if q:
-                st.caption("❌ No matches found")
-            else:
-                st.caption("🔍 Type to search patients")
-
-        if st.session_state.selected_patient_id or st.session_state.selected_patient_name:
-            st.caption(
-                f"Selected: {st.session_state.selected_patient_id} - {st.session_state.selected_patient_name}"
-            )
-    
     view_cols = st.columns([0.2, 0.8], gap="small")
     with view_cols[0]:
         view_mode = st.radio(
