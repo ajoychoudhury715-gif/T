@@ -5657,8 +5657,8 @@ def save_profiles(df: pd.DataFrame, sheet_name: str) -> bool:
             wb = openpyxl.Workbook()
 
         # Use ExcelWriter to write the sheet (replaces if exists, creates if not)
-        # This automatically handles keeping other sheets intact
-        with pd.ExcelWriter(file_path, engine="openpyxl", if_sheet_exists="replace") as writer:
+        # Use mode='a' (append) with if_sheet_exists='replace' to keep other sheets intact
+        with pd.ExcelWriter(file_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
             clean_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
         # After saving, reload and ensure at least one sheet is visible
