@@ -9671,13 +9671,6 @@ if category == "Assistants" and assist_view == "Availability":
     st.markdown("### 👥 Assistant Availability Dashboard")
     st.markdown("---")
 
-    # Show assistant overview with duty status
-    try:
-        render_assistant_overview_widget()
-        st.markdown("---")
-    except Exception as e:
-        st.caption(f"Assistant overview unavailable: {e}")
-
     availability_df = df if 'df' in locals() else df_raw if 'df_raw' in locals() else pd.DataFrame()
     assistants_for_view = get_assistants_list(availability_df)
     if not assistants_for_view:
