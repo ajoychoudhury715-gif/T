@@ -5653,22 +5653,24 @@ def save_profiles(df: pd.DataFrame, sheet_name: str) -> bool:
                 clean_df.loc[missing, "id"] = [str(uuid.uuid4()) for _ in range(int(missing.sum()))]
         try:
             wb = openpyxl.load_workbook(file_path)
-        except zipfile.BadZipFile:
+        except (zipfile.BadZipFile, KeyError, Exception):
             wb = openpyxl.Workbook()
-        except Exception:
-            wb = openpyxl.Workbook()
-        if sheet_name in wb.sheetnames:
-            std = wb[sheet_name]
-            wb.remove(std)
-        # Use ExcelWriter with the existing workbook to keep other sheets intact
-        with pd.ExcelWriter(file_path, engine="openpyxl") as writer:
-            writer.book = wb
-            writer.sheets = {ws.title: ws for ws in wb.worksheets}
+
+        # Use ExcelWriter to write the sheet (replaces if exists, creates if not)
+        # This automatically handles keeping other sheets intact
+        with pd.ExcelWriter(file_path, engine="openpyxl", if_sheet_exists="replace") as writer:
             clean_df.to_excel(writer, sheet_name=sheet_name, index=False)
-            # Ensure at least one sheet is visible
-            if wb.sheetnames:
-                wb[wb.sheetnames[0]].sheet_state = 'visible'
-            writer.save()
+
+        # After saving, reload and ensure at least one sheet is visible
+        try:
+            wb = openpyxl.load_workbook(file_path)
+            if not any(ws.sheet_state == 'visible' for ws in wb.worksheets):
+                # If no sheets are visible, make the first one visible
+                if wb.sheetnames:
+                    wb[wb.sheetnames[0]].sheet_state = 'visible'
+                    wb.save(file_path)
+        except Exception:
+            pass  # If we can't fix visibility, that's ok
         try:
             _get_active_assistant_profile_names.clear()
         except Exception:
