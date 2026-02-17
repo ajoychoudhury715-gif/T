@@ -447,6 +447,37 @@ def get_assistants_list(schedule_df):
 def extract_assistants(schedule_df):
     return get_assistants_list(schedule_df)
 
+def mark_busy_assistants(schedule_df: pd.DataFrame) -> pd.DataFrame:
+    """Mark assistants as busy (🔴 BUSY) if they have an active duty.
+
+    Modifies FIRST, SECOND, Third columns to show busy status for assistants
+    with IN_PROGRESS duties.
+    """
+    if schedule_df is None or schedule_df.empty:
+        return schedule_df
+
+    df_copy = schedule_df.copy()
+
+    # Get all unique assistants from schedule
+    assistants = extract_assistants(df_copy)
+
+    # Check which assistants have active duties
+    busy_assistants = set()
+    for assistant in assistants:
+        active_duty = fetch_active_duty_run(None, assistant)
+        if active_duty:
+            busy_assistants.add(assistant)
+
+    # Mark busy assistants in the schedule
+    for col in ["FIRST", "SECOND", "Third"]:
+        if col in df_copy.columns:
+            for idx in df_copy.index:
+                cell_value = str(df_copy.loc[idx, col]).strip()
+                if cell_value and cell_value in busy_assistants:
+                    df_copy.loc[idx, col] = f"🔴 {cell_value}"
+
+    return df_copy
+
 def ensure_attendance_sheet_exists(excel_path: Optional[str] = None):
     """Create/align the attendance sheet with expected columns."""
     path = Path(_attendance_excel_path(excel_path))
@@ -2519,15 +2550,19 @@ def render_compact_dashboard(df_schedule: pd.DataFrame):
 
         if view_mode == "Table":
             df_table = df_display.drop(columns=["REMINDER_ROW_ID"], errors="ignore")
-            st.data_editor(df_table, use_container_width=True, height=280, key="compact_schedule_editor")
+            # Mark busy assistants in the display
+            df_table_with_busy = mark_busy_assistants(df_table)
+            st.data_editor(df_table_with_busy, use_container_width=True, height=280, key="compact_schedule_editor")
         else:
             show_case = "CASE PAPER" in df_display.columns
             cards_per_row = 3
+            # Mark busy assistants in card view
+            df_cards_marked = mark_busy_assistants(df_cards)
             card_rows = [
-                df_cards.iloc[i:i + cards_per_row]
-                for i in range(0, len(df_cards), cards_per_row)
+                df_cards_marked.iloc[i:i + cards_per_row]
+                for i in range(0, len(df_cards_marked), cards_per_row)
             ]
-            if df_cards.empty:
+            if df_cards_marked.empty:
                 st.info("No patients found.")
             for chunk in card_rows:
                 cols = st.columns(len(chunk), gap="small")
