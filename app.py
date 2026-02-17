@@ -507,6 +507,13 @@ def ensure_attendance_sheet_exists(excel_path: Optional[str] = None):
         pass
 
 def load_attendance_sheet(excel_path: Optional[str] = None):
+    """Load attendance from Supabase or Excel sheet."""
+    if USE_SUPABASE and supabase_client:
+        df = _sb_load("assistant_attendance")
+        if df.empty:
+            df = pd.DataFrame(columns=ATTENDANCE_COLUMNS)
+        return df if not df.empty else pd.DataFrame(columns=ATTENDANCE_COLUMNS)
+
     ensure_attendance_sheet_exists(excel_path)
     path = _attendance_excel_path(excel_path)
     try:
@@ -523,6 +530,11 @@ def load_attendance_sheet(excel_path: Optional[str] = None):
     return df[ATTENDANCE_COLUMNS]
 
 def save_attendance_sheet(excel_path: Optional[str], att_df: pd.DataFrame):
+    """Save attendance to Supabase or Excel sheet."""
+    if USE_SUPABASE and supabase_client:
+        _sb_upsert(att_df, "assistant_attendance")
+        return
+
     ensure_attendance_sheet_exists(excel_path)
     path = _attendance_excel_path(excel_path)
     try:
@@ -606,44 +618,87 @@ def save_excel_sheet(df: pd.DataFrame, sheet_name: str, excel_path: Optional[str
     except Exception as e:
         print(f"Error saving {sheet_name}: {e}")
 
+# ==================== SUPABASE HELPERS ====================
+def _sb_load(table: str, columns: str = "*") -> pd.DataFrame:
+    """Load all rows from a Supabase table into a DataFrame."""
+    try:
+        resp = supabase_client.table(table).select(columns).execute()
+        return pd.DataFrame(resp.data or [])
+    except Exception as e:
+        print(f"Supabase load error [{table}]: {e}")
+        return pd.DataFrame()
+
+def _sb_upsert(df: pd.DataFrame, table: str):
+    """Upsert a DataFrame to a Supabase table."""
+    try:
+        records = df.where(pd.notna(df), None).to_dict("records")
+        if records:
+            supabase_client.table(table).upsert(records).execute()
+    except Exception as e:
+        print(f"Supabase upsert error [{table}]: {e}")
+
 # ==================== DUTIES MASTER SHEET FUNCTIONS ====================
 def load_duties_master_sheet(excel_path: Optional[str] = None) -> pd.DataFrame:
-    """Load duties master from Excel sheet."""
+    """Load duties master from Supabase or Excel sheet."""
     columns = ["id", "title", "frequency", "default_minutes", "op", "active", "created_at"]
+    if USE_SUPABASE and supabase_client:
+        df = _sb_load("duties_master")
+        return df if not df.empty else pd.DataFrame(columns=columns)
     return load_excel_sheet(DUTIES_MASTER_SHEET, columns, excel_path)
 
 def save_duties_master_sheet(df: pd.DataFrame, excel_path: Optional[str] = None):
-    """Save duties master to Excel sheet."""
+    """Save duties master to Supabase or Excel sheet."""
+    if USE_SUPABASE and supabase_client:
+        _sb_upsert(df, "duties_master")
+        return
     save_excel_sheet(df, DUTIES_MASTER_SHEET, excel_path)
 
 # ==================== DUTY ASSIGNMENTS SHEET FUNCTIONS ====================
 def load_duty_assignments_sheet(excel_path: Optional[str] = None) -> pd.DataFrame:
-    """Load duty assignments from Excel sheet."""
+    """Load duty assignments from Supabase or Excel sheet."""
     columns = ["id", "duty_id", "assistant", "op", "est_minutes", "active"]
+    if USE_SUPABASE and supabase_client:
+        df = _sb_load("duty_assignments")
+        return df if not df.empty else pd.DataFrame(columns=columns)
     return load_excel_sheet(DUTY_ASSIGNMENTS_SHEET, columns, excel_path)
 
 def save_duty_assignments_sheet(df: pd.DataFrame, excel_path: Optional[str] = None):
-    """Save duty assignments to Excel sheet."""
+    """Save duty assignments to Supabase or Excel sheet."""
+    if USE_SUPABASE and supabase_client:
+        _sb_upsert(df, "duty_assignments")
+        return
     save_excel_sheet(df, DUTY_ASSIGNMENTS_SHEET, excel_path)
 
 # ==================== DUTY RUNS SHEET FUNCTIONS ====================
 def load_duty_runs_sheet(excel_path: Optional[str] = None) -> pd.DataFrame:
-    """Load duty runs from Excel sheet."""
+    """Load duty runs from Supabase or Excel sheet."""
     columns = ["id", "date", "assistant", "duty_id", "status", "started_at", "due_at", "ended_at", "est_minutes", "op"]
+    if USE_SUPABASE and supabase_client:
+        df = _sb_load("duty_runs")
+        return df if not df.empty else pd.DataFrame(columns=columns)
     return load_excel_sheet(DUTY_RUNS_SHEET, columns, excel_path)
 
 def save_duty_runs_sheet(df: pd.DataFrame, excel_path: Optional[str] = None):
-    """Save duty runs to Excel sheet."""
+    """Save duty runs to Supabase or Excel sheet."""
+    if USE_SUPABASE and supabase_client:
+        _sb_upsert(df, "duty_runs")
+        return
     save_excel_sheet(df, DUTY_RUNS_SHEET, excel_path)
 
 # ==================== PATIENTS SHEET FUNCTIONS ====================
 def load_patients_sheet(excel_path: Optional[str] = None) -> pd.DataFrame:
-    """Load patients from Excel sheet."""
+    """Load patients from Supabase or Excel sheet."""
     columns = ["id", "name"]
+    if USE_SUPABASE and supabase_client:
+        df = _sb_load("patients")
+        return df if not df.empty else pd.DataFrame(columns=columns)
     return load_excel_sheet(PATIENTS_SHEET, columns, excel_path)
 
 def save_patients_sheet(df: pd.DataFrame, excel_path: Optional[str] = None):
-    """Save patients to Excel sheet."""
+    """Save patients to Supabase or Excel sheet."""
+    if USE_SUPABASE and supabase_client:
+        _sb_upsert(df, "patients")
+        return
     save_excel_sheet(df, PATIENTS_SHEET, excel_path)
 
 # ==================== EXCEL-BASED DUTY FUNCTIONS ====================
