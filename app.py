@@ -147,8 +147,8 @@ PROFILE_COLUMNS = [
 
 # Storage flags (will be updated based on configuration)
 # FORCE LOCAL MODE: Set to False to use only local Excel files
-USE_SUPABASE = False
-FORCE_SUPABASE = False  # Changed from True - disables cloud storage
+USE_SUPABASE = True  # ENABLED: Using Supabase for fast performance
+FORCE_SUPABASE = True  # Changed from True - disables cloud storage
 
 # Attendance configuration
 ATTENDANCE_SHEET = "Assistants_Attendance"
