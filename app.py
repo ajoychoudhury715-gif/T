@@ -7200,24 +7200,24 @@ def save_data(dataframe, show_toast=True, message="Data saved!", *, ignore_confl
                     st.toast(message, icon="✅")
             else:
                 st.warning("⚠️ Supabase not configured. Saving to local Excel instead.")
-                with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
-                    dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
+                # Use our safe sheet saving function to preserve other sheets
+                save_excel_sheet(dataframe, 'Sheet1')
                 if show_toast:
                     st.toast(f"{message} (local)", icon="💾")
         else:
-            with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
-                dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
-                try:
-                    meta = _apply_time_blocks_to_meta(_get_meta_from_df(dataframe))
-                    meta_rows = []
-                    for k, v in meta.items():
-                        if isinstance(v, (dict, list)):
-                            meta_rows.append({"key": str(k), "value": json.dumps(v)})
-                        else:
-                            meta_rows.append({"key": str(k), "value": str(v)})
-                    pd.DataFrame(meta_rows).to_excel(writer, sheet_name='Meta', index=False)
-                except Exception:
-                    pass
+            # Use our safe sheet saving function to preserve other sheets
+            save_excel_sheet(dataframe, 'Sheet1')
+            try:
+                meta = _apply_time_blocks_to_meta(_get_meta_from_df(dataframe))
+                meta_rows = []
+                for k, v in meta.items():
+                    if isinstance(v, (dict, list)):
+                        meta_rows.append({"key": str(k), "value": json.dumps(v)})
+                    else:
+                        meta_rows.append({"key": str(k), "value": str(v)})
+                save_excel_sheet(pd.DataFrame(meta_rows), 'Meta')
+            except Exception:
+                pass
             success = True
             if show_toast:
                 st.toast(message, icon="✅")
