@@ -1126,9 +1126,7 @@ def compute_free_minutes_for_assistant(schedule_df: pd.DataFrame, assistant: str
 
 def render_duty_reminder_widget(schedule_df: pd.DataFrame, supabase):
     st.markdown("### 🧭 Duties")
-    if not supabase:
-        st.caption("Configure Supabase to enable duties.")
-        return
+    # Duties are now stored in Excel (supabase parameter kept for compatibility but not used)
 
     assistants = extract_assistants(schedule_df)
     if not assistants:
@@ -7743,7 +7741,8 @@ with st.sidebar:
         st.caption(f"Punch widget unavailable: {e}")
     st.divider()
     try:
-        render_duty_reminder_widget(schedule_for_punch, supabase_client if (USE_SUPABASE and supabase_client is not None) else None)
+        # Duties now use Excel backend - supabase parameter kept for backward compatibility
+        render_duty_reminder_widget(schedule_for_punch, None)
     except Exception as e:
         st.caption(f"Duty reminder unavailable: {e}")
     st.divider()
