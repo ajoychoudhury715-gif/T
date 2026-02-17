@@ -8157,7 +8157,42 @@ if category == "Scheduling":
             }
             df_raw = pd.concat([df_raw, pd.DataFrame([new_row])], ignore_index=True)
     
-    col_save, col_del_pick, col_del_btn = st.columns([0.20, 0.30, 0.15])
+    col_add, col_save, col_del_pick, col_del_btn = st.columns([0.15, 0.20, 0.30, 0.15])
+
+    with col_add:
+        if st.button(
+            "➕ Add Patient",
+            key="add_patient_btn",
+            use_container_width=True,
+        ):
+            # Create a new empty row
+            new_row = {
+                "Patient ID": "",
+                "Patient Name": "",
+                "In Time": None,
+                "Out Time": None,
+                "Procedure": "",
+                "DR.": "",
+                "FIRST": "",
+                "SECOND": "",
+                "Third": "",
+                "CASE PAPER": "",
+                "OP": "",
+                "SUCTION": False,
+                "CLEANING": False,
+                "STATUS": "WAITING",
+                "REMINDER_ROW_ID": str(uuid.uuid4()),
+                "REMINDER_SNOOZE_UNTIL": pd.NA,
+                "REMINDER_DISMISSED": False
+            }
+            # Append to the dataframe
+            new_row_df = pd.DataFrame([new_row])
+            df_raw_with_new = pd.concat([df_raw, new_row_df], ignore_index=True)
+
+            # Save the updated dataframe
+            _maybe_save(df_raw_with_new, show_toast=False, message="New patient row added!")
+            st.success("New patient row added!")
+            st.rerun()
 
     with col_save:
         # Save button for the data editor
