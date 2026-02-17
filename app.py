@@ -2920,9 +2920,14 @@ if "loaded_save_version" not in st.session_state:
 if "loaded_save_at" not in st.session_state:
     st.session_state.loaded_save_at = None
 if "enable_conflict_checks" not in st.session_state:
-    st.session_state.enable_conflict_checks = True
+    # Disable conflict checking when using Supabase (migrated data has version mismatches)
+    st.session_state.enable_conflict_checks = False if USE_SUPABASE else True
 if "save_conflict" not in st.session_state:
     st.session_state.save_conflict = None
+else:
+    # Clear any existing conflict state on fresh load (for Supabase migration)
+    if USE_SUPABASE:
+        st.session_state.save_conflict = None
 if "is_saving" not in st.session_state:
     st.session_state.is_saving = False
 if "unsaved_df_version" not in st.session_state:
