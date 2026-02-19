@@ -145,10 +145,10 @@ PROFILE_COLUMNS = [
     "updated_by",
 ]
 
-# Storage flags (will be updated based on configuration)
-# FORCE LOCAL MODE: Set to False to use only local Excel files
-USE_SUPABASE = True  # ENABLED: Using Supabase for fast performance
-FORCE_SUPABASE = True  # Changed from True - disables cloud storage
+# Storage configuration
+# USE_SUPABASE: If True and credentials are available, uses Supabase Postgres for cloud sync
+# Otherwise falls back to local Excel file (Putt Allotment.xlsx)
+USE_SUPABASE = True
 
 # Attendance configuration
 ATTENDANCE_SHEET = "Assistants_Attendance"
@@ -175,11 +175,6 @@ if "profiles_cache_bust" not in st.session_state:
 def now_ist():
     """Get current datetime in IST timezone."""
     return datetime.now(IST)
-
-def ist_today_and_time():
-    """Get current date and time in IST as strings."""
-    now = now_ist()
-    return now.date().isoformat(), now.strftime("%H:%M:%S")
 
 def time_to_minutes(time_value: Any) -> Optional[int]:
     """Convert time values to minutes since midnight for comparison."""
@@ -221,21 +216,6 @@ def time_to_minutes(time_value: Any) -> Optional[int]:
         pass
 
     return None
-
-def safe_str_to_time_obj(time_str: Any) -> Optional[time_type]:
-    """Convert HH:MM string to time object. Returns None if invalid."""
-    if not time_str or not isinstance(time_str, str):
-        return None
-    try:
-        parts = time_str.strip().split(":")
-        if len(parts) != 2:
-            return None
-        h, m = int(parts[0]), int(parts[1])
-        if 0 <= h < 24 and 0 <= m < 60:
-            return time_type(hour=h, minute=m)
-        return None
-    except Exception:
-        return None
 
 def _get_profiles_cache_snapshot() -> dict[str, Any]:
     cached = st.session_state.get("profiles_cache")
@@ -6915,11 +6895,21 @@ def save_data_to_supabase(_url: str, _key: str, _table: str, _row_id: str, df: p
         return False
 
 
-# Try to connect to Supabase if credentials are available
+# Try to connect to Supabase using credentials from secrets.toml / env vars
 # PERFORMANCE: Only run full initialization once per session
-# Supabase initialization is disabled - using Excel-only mode
-# All data is now persisted in Putt Allotment.xlsx
-st.sidebar.info("📁 Excel-only mode: All data stored locally")
+try:
+    _sb_url, _sb_key, _sb_table, _sb_row_id, _sb_profile_table = (
+        _get_supabase_config_from_secrets_or_env()
+    )
+    if _sb_url and _sb_key and SUPABASE_AVAILABLE:
+        _maybe_client = _get_supabase_client(_sb_url, _sb_key)
+        if _maybe_client is not None:
+            supabase_client = _maybe_client
+            supabase_table_name = _sb_table
+            supabase_row_id = _sb_row_id
+            st.sidebar.info("☁️ Supabase connected: cloud data sync enabled")
+except Exception:
+    pass
 
 def _data_editor_has_pending_edits(editor_key: str) -> bool:
     """Detect pending edits without touching widget state.
